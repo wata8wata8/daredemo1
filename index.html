@@ -316,10 +316,10 @@
             <!-- Boss Health Bar -->
             <div id="bossHealthContainer" class="w-full max-w-md mx-auto my-1 opacity-0 pointer-events-none">
                 <div class="flex justify-between items-center text-xs md:text-sm font-bold text-pink-400 mb-1 px-1 hud-text">
-                    <span class="flex items-center gap-1 text-red-400 drop-shadow-[0_0_8px_#ff0055]">
-                        <i class="fas fa-skull"></i> 昆虫大魔王 [HERACLES CORE]
+                    <span class="flex items-center gap-1.5 text-yellow-300 drop-shadow-[0_0_8px_#ffe600]">
+                        <i class="fas fa-crown text-yellow-400"></i> 魔王 TITI [EMPEROR TITI]
                     </span>
-                    <span id="bossHpPercent" class="text-yellow-300">100%</span>
+                    <span id="bossHpPercent" class="text-cyan-300">100%</span>
                 </div>
                 <div class="w-full bg-gray-950 h-5 rounded-full border border-pink-500/80 p-0.5 shadow-[0_0_15px_rgba(255,0,127,0.5)]">
                     <div id="bossHpBar" class="bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-400 h-full w-full rounded-full transition-all duration-150 shadow-[0_0_10px_#ff007f]"></div>
@@ -347,7 +347,7 @@
                     ムシムシウォーズ
                 </h1>
                 <p class="text-xs md:text-base font-bold text-pink-400 mb-6 tracking-widest uppercase" style="text-shadow: 0 0 10px #ff007f;">
-                    ～CYBER DRAGONFLY VS MEGA BUG CORE～
+                    ～CYBER DRAGONFLY VS EMPEROR TITI～
                 </p>
                 
                 <div class="neon-card rounded-lg p-5 mb-6 text-left text-xs md:text-sm text-gray-200 space-y-2.5">
@@ -355,7 +355,7 @@
                         <i class="fas fa-terminal"></i> 昆虫博士の電脳指令ログ:
                     </p>
                     <p class="text-gray-300 leading-relaxed">
-                        「電脳自然界に異常事態発生じゃ！暴走したサイバー昆虫軍団がコアを侵食しておる！鋼鉄とネオンエネルギーで改修された決戦機体<span class="text-cyan-300 font-bold">『鋼鉄トンボ号』</span>を緊急発進させ、敵群を沈めるのじゃ！スコアを上げれば伝説の<span class="text-pink-400 font-bold">『昆虫大魔王コア』</span>が姿を現すぞ！」
+                        「電脳自然界に異常事態発生じゃ！暴走したサイバー軍団がコアを侵食しておる！鋼鉄とネオンエネルギーで改修された決戦機体<span class="text-cyan-300 font-bold">『鋼鉄トンボ号』</span>を緊急発進させ、敵群を沈めるのじゃ！スコアを上げれば伝説の<span class="text-pink-400 font-bold">『魔王 TITI』</span>が姿を現すぞ！」
                     </p>
                 </div>
 
@@ -369,16 +369,16 @@
         <div id="warningOverlay" class="overlay-screen bg-black/90 hidden">
             <div class="text-center warning-anim">
                 <div class="inline-block text-pink-500 text-sm md:text-base font-bold tracking-widest border border-pink-500 px-4 py-1 rounded mb-3 shadow-[0_0_15px_#ff0055]">
-                    EMERGENCY ALERT // CODE: HERACLES
+                    EMERGENCY ALERT // CODE: EMPEROR TITI
                 </div>
                 <h2 class="text-5xl md:text-7xl font-black text-red-500 tracking-widest mb-2 font-mono" style="text-shadow: 0 0 30px #ff0055, 0 0 60px #ff0000;">
                     ⚠️ WARNING ⚠️
                 </h2>
                 <p class="text-2xl md:text-4xl font-black text-yellow-300 tracking-wider mb-4 font-mono" style="text-shadow: 0 0 15px #ffe600;">
-                    昆虫大魔王 CORE 降臨！！
+                    魔王 TITI 降臨！！
                 </p>
                 <p class="text-base md:text-lg text-cyan-300 font-bold tracking-wide">
-                    強力なプラズマ弾幕を回避し、中枢コアを撃破せよ！
+                    皇帝の強力なプラズマ弾幕を回避し、撃破せよ！
                 </p>
             </div>
         </div>
@@ -389,7 +389,7 @@
                 <h2 class="text-4xl md:text-6xl font-black text-pink-500 mb-2 tracking-widest font-mono" style="text-shadow: 0 0 25px #ff007f, 0 0 50px #ff0055;">
                     SYSTEM DOWN
                 </h2>
-                <p id="gameOverSubtext" class="text-sm md:text-base text-yellow-300 mb-5 font-bold tracking-wide">昆虫大魔王の侵攻を食い止められなかった...</p>
+                <p id="gameOverSubtext" class="text-sm md:text-base text-yellow-300 mb-5 font-bold tracking-wide">魔王 TITI の侵攻を食い止められなかった...</p>
                 
                 <div class="neon-card rounded-lg p-5 mb-6 text-center">
                     <div class="text-xs text-cyan-300 tracking-widest uppercase mb-1">TOTAL BATTLE SCORE</div>
@@ -461,6 +461,13 @@
         let boss = null;
         let particles = [];
         let natureElements = [];
+
+        // Preload Emperor TITI illustrated boss image
+        const bossImage = new Image();
+        bossImage.src = 'image/boss_titi_illust.png';
+        bossImage.onerror = () => {
+            bossImage.src = 'image/titi.jpg';
+        };
 
         let enemySpawnRate = 1400; 
         let lastEnemySpawnTime = 0;
@@ -1120,17 +1127,18 @@
         class Boss {
             constructor() {
                 this.x = LOGICAL_WIDTH / 2;
-                this.y = -100;
-                this.targetY = 120;
-                this.radius = 65;
-                this.maxHp = 60;
+                this.y = -120;
+                this.targetY = 135;
+                this.radius = 72;
+                this.maxHp = 70;
                 this.hp = this.maxHp;
-                this.speed = 3;
+                this.speed = 3.2;
                 this.direction = 1;
                 this.lastShotTime = 0;
-                this.fireRate = 1200;
+                this.fireRate = 1100;
                 this.markedForDeletion = false;
                 this.hitTimer = 0;
+                this.attackCount = 0;
             }
 
             draw() {
@@ -1149,57 +1157,107 @@
                 ctx.lineWidth = 3;
                 ctx.setLineDash([16, 12, 4, 12]);
                 ctx.beginPath();
-                ctx.arc(0, 0, this.radius + 14, 0, Math.PI * 2);
+                ctx.arc(0, 0, this.radius + 18, 0, Math.PI * 2);
                 ctx.stroke();
                 ctx.restore();
 
                 ctx.save();
                 ctx.rotate(-now * 0.002);
-                ctx.strokeStyle = '#ffe600';
-                ctx.shadowColor = '#ffe600';
-                ctx.shadowBlur = 10;
-                ctx.lineWidth = 1.5;
+                ctx.strokeStyle = '#00f3ff';
+                ctx.shadowColor = '#00f3ff';
+                ctx.shadowBlur = 12;
+                ctx.lineWidth = 2;
                 ctx.setLineDash([8, 16]);
                 ctx.beginPath();
-                ctx.arc(0, 0, this.radius + 6, 0, Math.PI * 2);
+                ctx.arc(0, 0, this.radius + 8, 0, Math.PI * 2);
                 ctx.stroke();
                 ctx.restore();
 
-                // 2. Boss Core Body Base
-                ctx.fillStyle = 'rgba(25, 5, 20, 0.85)';
+                // 2. Cyber Mech Collar / Armor underneath head
+                ctx.fillStyle = '#0f172a';
+                ctx.strokeStyle = '#00f3ff';
+                ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.moveTo(-this.radius * 0.8, this.radius * 0.5);
+                ctx.lineTo(-this.radius * 1.15, this.radius * 1.05);
+                ctx.lineTo(this.radius * 1.15, this.radius * 1.05);
+                ctx.lineTo(this.radius * 0.8, this.radius * 0.5);
+                ctx.closePath();
                 ctx.fill();
+                ctx.stroke();
 
+                // Vernier Thrusters on Collar
+                ctx.fillStyle = '#ff007f';
+                ctx.fillRect(-this.radius * 0.95, this.radius * 1.05, 10, 12);
+                ctx.fillRect(this.radius * 0.95 - 10, this.radius * 1.05, 10, 12);
+
+                // 3. Illustrated Boss Face (image/boss_titi_illust.png)
+                ctx.save();
+                // Circular clipping path for face
+                ctx.beginPath();
+                ctx.arc(0, -2, this.radius, 0, Math.PI * 2);
+                ctx.clip();
+
+                if (bossImage.complete && bossImage.naturalWidth !== 0) {
+                    const aspect = bossImage.naturalWidth / bossImage.naturalHeight;
+                    const drawH = (this.radius * 2) * 1.25;
+                    const drawW = drawH * aspect;
+                    // Draw centered illustrated face
+                    ctx.drawImage(bossImage, -drawW / 2, -drawH / 2 - 2, drawW, drawH);
+                } else {
+                    // Fallback avatar if loading
+                    ctx.fillStyle = '#1e293b';
+                    ctx.fill();
+                    ctx.font = `82px ${EMOJI_FONT_STACK}`;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('👨‍🦱', 0, 0);
+                }
+
+                // Hit Flash Damage Overlay
+                if (this.hitTimer > 0) {
+                    ctx.fillStyle = 'rgba(255, 0, 85, 0.55)';
+                    ctx.fillRect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
+                }
+                ctx.restore();
+
+                // 4. Cyber Frame Ring around Face
                 ctx.strokeStyle = '#ff007f';
                 ctx.lineWidth = 3.5;
                 ctx.shadowColor = '#ff007f';
-                ctx.shadowBlur = 16;
+                ctx.shadowBlur = 14;
+                ctx.beginPath();
+                ctx.arc(0, -2, this.radius, 0, Math.PI * 2);
                 ctx.stroke();
 
-                // 3. Emoji Boss Graphic
-                ctx.font = `82px ${EMOJI_FONT_STACK}`;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('🪲', 0, 6);
-
-                // Crown with Neon Gold Glow
+                // 5. Crown of Emperor TITI with Neon Gold Glow
                 ctx.save();
                 ctx.shadowColor = '#ffe600';
-                ctx.shadowBlur = 14;
-                ctx.font = `44px ${EMOJI_FONT_STACK}`;
-                ctx.fillText('👑', 0, -52);
+                ctx.shadowBlur = 18;
+                ctx.font = `46px ${EMOJI_FONT_STACK}`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('👑', 0, -this.radius - 18);
                 ctx.restore();
 
-                // Hit Flash
-                if (this.hitTimer > 0) {
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-                    ctx.shadowColor = '#ffffff';
-                    ctx.shadowBlur = 25;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                }
+                // 6. Cyber Scouter / Visor over Left Eye
+                ctx.save();
+                ctx.shadowColor = '#00f3ff';
+                ctx.shadowBlur = 12;
+                ctx.fillStyle = 'rgba(0, 243, 255, 0.45)';
+                ctx.strokeStyle = '#00f3ff';
+                ctx.lineWidth = 1.8;
+                // Left Eye Scouter Ring
+                ctx.beginPath();
+                ctx.arc(-17, -13, 13, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+                // Reticle Crosshairs
+                ctx.beginPath();
+                ctx.moveTo(-31, -13); ctx.lineTo(-3, -13);
+                ctx.moveTo(-17, -27); ctx.lineTo(-17, 1);
+                ctx.stroke();
+                ctx.restore();
 
                 ctx.restore();
             }
@@ -1226,13 +1284,37 @@
 
             attack() {
                 playSound('warning');
-                if (player) {
+                if (!player) return;
+                this.attackCount++;
+
+                const pattern = this.attackCount % 3;
+                if (pattern === 0) {
+                    // Standard 3-way spread
                     for (let angleOffset of [-25, 0, 25]) {
                         const baseAngle = Math.atan2(player.y - this.y, player.x - this.x) * 180 / Math.PI;
                         const finalRad = (baseAngle + angleOffset) * Math.PI / 180;
                         const targetX = this.x + Math.cos(finalRad) * 300;
                         const targetY = this.y + Math.sin(finalRad) * 300;
-                        enemyProjectiles.push(new EnemyProjectile(this.x, this.y + 20, targetX, targetY, 4.5));
+                        enemyProjectiles.push(new EnemyProjectile(this.x, this.y + 20, targetX, targetY, 4.8));
+                    }
+                } else if (pattern === 1) {
+                    // Precision Scouter Beam: 2 rapid plasma bursts from left eye
+                    const scouterX = this.x - 17;
+                    const scouterY = this.y - 13;
+                    enemyProjectiles.push(new EnemyProjectile(scouterX, scouterY, player.x, player.y, 6.2));
+                    setTimeout(() => {
+                        if (boss && gameState === 'PLAYING' && player) {
+                            enemyProjectiles.push(new EnemyProjectile(boss.x - 17, boss.y - 13, player.x, player.y, 6.8));
+                        }
+                    }, 140);
+                } else {
+                    // 5-way Wide Burst
+                    for (let angleOffset of [-40, -20, 0, 20, 40]) {
+                        const baseAngle = Math.atan2(player.y - this.y, player.x - this.x) * 180 / Math.PI;
+                        const finalRad = (baseAngle + angleOffset) * Math.PI / 180;
+                        const targetX = this.x + Math.cos(finalRad) * 300;
+                        const targetY = this.y + Math.sin(finalRad) * 300;
+                        enemyProjectiles.push(new EnemyProjectile(this.x, this.y + 20, targetX, targetY, 4.2));
                     }
                 }
             }
@@ -1259,7 +1341,7 @@
                     
                     setTimeout(() => {
                         bossHealthContainer.classList.add('opacity-0');
-                        sceneIndicator.innerText = "🎉 HERACLES CORE PURGED! SYSTEM SECURED! 🎉";
+                        sceneIndicator.innerText = "🎉 魔王 TITI を撃破！電脳世界に平和が訪れた！ 🎉";
                     }, 500);
                 }
             }
@@ -1394,7 +1476,7 @@
                 gameState = 'PLAYING';
                 boss = new Boss();
                 currentBiome = 'bossCastle';
-                sceneIndicator.innerText = "👑 BOSS CORE: HERACLES OVERDRIVE 👑";
+                sceneIndicator.innerText = "👑 BOSS: EMPEROR TITI OVERDRIVE 👑";
                 bossHealthContainer.classList.remove('opacity-0');
                 startBossBgm();
             }, 3000);
@@ -1454,9 +1536,9 @@
             stopAllBgm();
             finalScoreDisplay.innerText = score;
             if (bossSpawned && boss && boss.hp <= 0) {
-                gameOverSubtext.innerText = "🎉 見事に昆虫大魔王コアを撃破しました！ 🎉";
+                gameOverSubtext.innerText = "🎉 見事に魔王 TITI を撃破しました！ 🎉";
             } else {
-                gameOverSubtext.innerText = "昆虫大魔王の侵攻を食い止められなかった...";
+                gameOverSubtext.innerText = "魔王 TITI の侵攻を食い止められなかった...";
             }
             gameOverScreen.classList.remove('hidden');
         }
