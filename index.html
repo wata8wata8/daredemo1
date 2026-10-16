@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ムシムシウォーズ～昆虫博士は昆虫大魔王を倒せるか？～</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        body {
+            background-color: #0b1d0c;
+            color: #fff;
+            overflow: hidden;
+            touch-action: none;
+            font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+            user-select: none;
+        }
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #123514; 
+        }
+        canvas {
+            background-color: transparent;
+            box-shadow: 0 0 30px rgba(0, 255, 100, 0.2), 0 0 10px rgba(0,0,0,0.8);
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            border-radius: 12px;
+            border: 3px solid #4CAF50;
+        }
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        
+        .overlay-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(8, 24, 10, 0.88);
+            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            pointer-events: auto;
+        }
+
+        .hud-text {
+            font-family: 'Arial Black', Impact, sans-serif;
+            text-shadow: 2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000, 0 0 10px rgba(255,255,255,0.5);
+            pointer-events: auto;
+        }
+
+        .game-btn {
+            background: linear-gradient(135deg, #FF9800 0%, #F57C00 50%, #E65100 100%);
+            color: #FFF;
+            padding: 14px 36px;
+            border-radius: 50px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            border: 3px solid #FFE082;
+            box-shadow: 0 6px 0 #B71C1C, 0 10px 20px rgba(0,0,0,0.6);
+            transition: all 0.15s ease;
+            cursor: pointer;
+            pointer-events: auto;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+        }
+
+        .game-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: 0 8px 0 #B71C1C, 0 12px 25px rgba(255,152,0,0.5);
+        }
+
+        .game-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #B71C1C, 0 5px 10px rgba(0,0,0,0.4);
+        }
+
+        /* Boss Health Bar */
+        #bossHealthContainer {
+            transition: opacity 0.5s ease;
+        }
+
+        /* Mobile Controls */
+        #mobile-controls {
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            padding: 0 20px;
+            justify-content: space-between;
+            align-items: center;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .mobile-joystick-area {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.15);
+            border: 3px solid rgba(255, 255, 255, 0.4);
+            position: relative;
+            pointer-events: auto;
+            touch-action: none;
+        }
+
+        .mobile-joystick-knob {
+            width: 55px;
+            height: 55px;
+            background: radial-gradient(circle, #81C784 0%, #388E3C 100%);
+            border: 2px solid #FFF;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+        }
+
+        .mobile-fire-btn {
+            width: 85px;
+            height: 85px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #4FC3F7 0%, #0288D1 100%);
+            border: 3px solid #E0F7FA;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+            color: #FFF;
+            pointer-events: auto;
+            touch-action: none;
+            box-shadow: 0 6px 0 #01579B, 0 8px 15px rgba(0,0,0,0.5);
+        }
+        .mobile-fire-btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #01579B, 0 4px 8px rgba(0,0,0,0.5);
+        }
+
+        @media (max-width: 768px) {
+            #mobile-controls { display: flex; }
+            #instructions { display: none; }
+        }
+
+        /* Warning Banner */
+        @keyframes flashWarning {
+            0%, 100% { opacity: 0.9; transform: scale(1); }
+            50% { opacity: 0.3; transform: scale(1.05); }
+        }
+        .warning-anim {
+            animation: flashWarning 0.6s infinite alternate;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <canvas id="gameCanvas"></canvas>
+
+        <div id="ui-layer">
+            <!-- HUD Header -->
+            <div class="flex justify-between items-start w-full">
+                <div>
+                    <div class="hud-text text-lg md:text-2xl text-yellow-300 flex items-center">
+                        <span class="mr-2">🏆 SCORE:</span> <span id="scoreDisplay">0</span>
+                    </div>
+                    <div class="hud-text text-sm md:text-base text-green-300">
+                        👨‍🔬 昆虫博士の挑戦
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-end">
+                    <div class="hud-text text-lg md:text-2xl text-red-400 flex items-center mb-1">
+                        <span class="mr-2">トンボ号:</span>
+                        <div id="livesContainer" class="flex gap-1 text-red-500">
+                            <i class="fas fa-heart"></i>
+                            <i class="fas fa-heart"></i>
+                            <i class="fas fa-heart"></i>
+                        </div>
+                    </div>
+                    <!-- Audio Toggle Button -->
+                    <button id="soundToggleBtn" class="bg-gray-800 hover:bg-gray-700 border border-gray-500 text-yellow-300 text-xs md:text-sm px-3 py-1 rounded-full flex items-center gap-1 shadow pointer-events-auto">
+                        <i class="fas fa-volume-up" id="soundIcon"></i> SOUND: <span id="soundStatus">ON</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Boss Health Bar -->
+            <div id="bossHealthContainer" class="w-full max-w-md mx-auto my-1 opacity-0 pointer-events-none">
+                <div class="flex justify-between items-center text-xs md:text-sm font-bold text-red-400 mb-1 px-1 hud-text">
+                    <span>👑 昆虫大魔王 (HERACLES)</span>
+                    <span id="bossHpPercent">100%</span>
+                </div>
+                <div class="w-full bg-gray-900 h-5 rounded-full border-2 border-red-500 overflow-hidden shadow-lg">
+                    <div id="bossHpBar" class="bg-gradient-to-r from-yellow-500 via-red-500 to-red-700 h-full w-full transition-all duration-150"></div>
+                </div>
+            </div>
+
+            <!-- Stage & Biome Indicator -->
+            <div id="sceneIndicator" class="hud-text text-center text-lg md:text-xl text-emerald-300 mt-1" style="text-shadow: 0 0 8px rgba(0,0,0,0.8);">
+                🌿 ステージ 1: 平穏な草原 🌿
+            </div>
+
+            <!-- Instructions -->
+            <div id="instructions" class="hud-text text-center text-gray-200 text-xs md:text-sm mt-auto mb-2 opacity-90">
+                <p>操作: [W][A][S][D] または 矢印キーで移動 | [Space] で水滴ショット発射！</p>
+            </div>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="startScreen" class="overlay-screen">
+            <div class="text-center px-4 max-w-xl">
+                <div class="inline-block bg-yellow-500 text-gray-900 text-xs md:text-sm font-black px-4 py-1 rounded-full mb-3 tracking-widest shadow-md">
+                    昆虫シューティングアクション
+                </div>
+                <h1 class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 via-amber-400 to-red-500 mb-2 leading-tight tracking-wide" style="filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.8));">
+                    ムシムシウォーズ
+                </h1>
+                <p class="text-sm md:text-xl font-bold text-emerald-300 mb-6 tracking-wide">
+                    ～昆虫博士は昆虫大魔王を倒せるか？～
+                </p>
+                
+                <div class="bg-black/60 border-2 border-emerald-500/50 rounded-xl p-4 mb-6 text-left text-xs md:text-sm text-gray-200 space-y-2">
+                    <p class="text-yellow-300 font-bold flex items-center">👨‍🔬 昆虫博士のメモ:</p>
+                    <p>「大変じゃ！暴走した昆虫軍団が自然を荒らしておる！相棒の『トンボ号』に乗り込み、迫りくる虫たちを沈めるのじゃ！スコアを稼ぐと伝説の<span class="text-red-400 font-bold">『昆虫大魔王』</span>が姿を現すぞ！」</p>
+                </div>
+
+                <button id="startBtn" class="game-btn text-lg md:text-xl flex items-center justify-center mx-auto gap-2">
+                    <i class="fas fa-play"></i> 出撃！ゲーム開始
+                </button>
+            </div>
+        </div>
+
+        <!-- Boss Warning Banner Overlay -->
+        <div id="warningOverlay" class="overlay-screen bg-red-950/80 hidden">
+            <div class="text-center warning-anim">
+                <h2 class="text-5xl md:text-7xl font-black text-red-500 tracking-wider mb-2" style="text-shadow: 0 0 20px #FF0000;">
+                    ⚠️ WARNING ⚠️
+                </h2>
+                <p class="text-2xl md:text-4xl font-extrabold text-yellow-300 tracking-widest mb-4">
+                    昆虫大魔王 降臨！！
+                </p>
+                <p class="text-base md:text-lg text-white font-bold">
+                    強力な攻撃を回避し、撃破せよ！
+                </p>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen" class="overlay-screen hidden">
+            <h2 class="text-4xl md:text-6xl font-black text-red-500 mb-2 tracking-wide font-mono" style="text-shadow: 3px 3px 0 #000;">
+                GAME OVER
+            </h2>
+            <p id="gameOverSubtext" class="text-lg text-yellow-300 mb-4 font-bold">昆虫大魔王の野望を止められなかった...</p>
+            <div class="bg-black/60 border border-yellow-500/40 rounded-xl p-4 mb-6 text-center">
+                <div class="text-sm text-gray-400 mb-1">最終スコア</div>
+                <div id="finalScoreDisplay" class="text-3xl md:text-5xl font-black text-yellow-400 font-mono">0</div>
+            </div>
+            <button id="restartBtn" class="game-btn text-base md:text-lg flex items-center justify-center gap-2">
+                <i class="fas fa-redo"></i> もう一度挑戦する
+            </button>
+        </div>
+
+        <!-- Mobile Controls -->
+        <div id="mobile-controls">
+            <div class="mobile-joystick-area" id="joystickArea">
+                <div class="mobile-joystick-knob" id="joystickKnob"></div>
+            </div>
+            <div class="mobile-fire-btn" id="fireBtn">
+                <i class="fas fa-tint"></i>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const livesContainer = document.getElementById('livesContainer');
+        const sceneIndicator = document.getElementById('sceneIndicator');
+        const startScreen = document.getElementById('startScreen');
+        const gameOverScreen = document.getElementById('gameOverScreen');
+        const warningOverlay = document.getElementById('warningOverlay');
+        const finalScoreDisplay = document.getElementById('finalScoreDisplay');
+        const gameOverSubtext = document.getElementById('gameOverSubtext');
+        const startBtn = document.getElementById('startBtn');
+        const restartBtn = document.getElementById('restartBtn');
+        
+        const bossHealthContainer = document.getElementById('bossHealthContainer');
+        const bossHpBar = document.getElementById('bossHpBar');
+        const bossHpPercent = document.getElementById('bossHpPercent');
+
+        const soundToggleBtn = document.getElementById('soundToggleBtn');
+        const soundIcon = document.getElementById('soundIcon');
+        const soundStatus = document.getElementById('soundStatus');
+
+        const joystickArea = document.getElementById('joystickArea');
+        const joystickKnob = document.getElementById('joystickKnob');
+        const fireBtn = document.getElementById('fireBtn');
+
+        const TARGET_FPS = 60;
+        const MS_PER_FRAME = 1000 / TARGET_FPS;
+        const LOGICAL_WIDTH = 800;
+        const LOGICAL_HEIGHT = 600;
+
+        // Font family for reliable cross-platform mobile Canvas emoji rendering
+        const EMOJI_FONT_STACK = '"Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Android Emoji", sans-serif';
+
+        let gameState = 'START'; // 'START', 'PLAYING', 'BOSS_WARNING', 'GAMEOVER'
+        let score = 0;
+        let lives = 3;
+        let animationId;
+        let lastTime = 0;
+
+        let player;
+        let projectiles = [];
+        let enemyProjectiles = [];
+        let enemies = [];
+        let boss = null;
+        let particles = [];
+        let natureElements = [];
+
+        let enemySpawnRate = 1400; 
+        let lastEnemySpawnTime = 0;
+        let difficultyMultiplier = 1;
+        let currentBiome = 'grassland'; // grassland, river, sea, bossCastle
+        let bossSpawned = false;
+
+        const keys = {
+            ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false,
+            w: false, a: false, s: false, d: false,
+            ' ': false
+        };
+
+        let joystickActive = false;
+        let joystickVector = { x: 0, y: 0 };
+        let isMobileFiring = false;
+
+        let audioMuted = false;
+        let audioInitialized = false;
+        let shootSynth, hitSynth, explosionSynth, warningSynth, bgmLoop, bossBgmLoop;
+
+        async function initAudioEngine() {
+            if (audioInitialized) return;
+            try {
+                await Tone.start();
+                
+                // Sound Effects Synthesizers
+                shootSynth = new Tone.Synth({
+                    oscillator: { type: 'sine' },
+                    envelope: { attack: 0.005, decay: 0.08, sustain: 0, release: 0.05 }
+                }).toDestination();
+                shootSynth.volume.value = -8;
+
+                hitSynth = new Tone.MembraneSynth({
+                    pitchDecay: 0.05,
+                    octaves: 4,
+                    oscillator: { type: 'sine' },
+                    envelope: { attack: 0.001, decay: 0.1, sustain: 0, release: 0.1 }
+                }).toDestination();
+                hitSynth.volume.value = -6;
+
+                explosionSynth = new Tone.NoiseSynth({
+                    noise: { type: 'white' },
+                    envelope: { attack: 0.005, decay: 0.3, sustain: 0, release: 0.1 }
+                }).toDestination();
+                explosionSynth.volume.value = -4;
+
+                warningSynth = new Tone.Synth({
+                    oscillator: { type: 'sawtooth' },
+                    envelope: { attack: 0.05, decay: 0.2, sustain: 0.2, release: 0.2 }
+                }).toDestination();
+
+                // BGM Synthesizers & Loops
+                const bgmSynth = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: 'triangle' },
+                    envelope: { attack: 0.02, decay: 0.1, sustain: 0.3, release: 0.2 }
+                }).toDestination();
+                bgmSynth.volume.value = -12;
+
+                const bgmNotes = [
+                    { time: '0:0', note: 'C4', dur: '8n' },
+                    { time: '0:1', note: 'E4', dur: '8n' },
+                    { time: '0:2', note: 'G4', dur: '8n' },
+                    { time: '0:3', note: 'C5', dur: '8n' },
+                    { time: '1:0', note: 'A4', dur: '8n' },
+                    { time: '1:1', note: 'F4', dur: '8n' },
+                    { time: '1:2', note: 'G4', dur: '4n' },
+                    { time: '2:0', note: 'D4', dur: '8n' },
+                    { time: '2:1', note: 'F4', dur: '8n' },
+                    { time: '2:2', note: 'A4', dur: '8n' },
+                    { time: '2:3', note: 'B4', dur: '8n' },
+                    { time: '3:0', note: 'C5', dur: '4n' },
+                    { time: '3:2', note: 'G4', dur: '4n' }
+                ];
+
+                bgmLoop = new Tone.Part((time, value) => {
+                    if (!audioMuted && gameState === 'PLAYING' && !boss) {
+                        bgmSynth.triggerAttackRelease(value.note, value.dur, time);
+                    }
+                }, bgmNotes);
+                bgmLoop.loop = true;
+                bgmLoop.loopEnd = '4m';
+
+                // Boss BGM Sequence
+                const bossSynth = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: 'sawtooth' },
+                    envelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.1 }
+                }).toDestination();
+                bossSynth.volume.value = -10;
+
+                const bossNotes = [
+                    { time: '0:0', note: 'C3', dur: '16n' },
+                    { time: '0:0:2', note: 'C3', dur: '16n' },
+                    { time: '0:1', note: 'Eb3', dur: '8n' },
+                    { time: '0:2', note: 'F3', dur: '8n' },
+                    { time: '0:3', note: 'Gb3', dur: '8n' },
+                    { time: '1:0', note: 'F3', dur: '8n' },
+                    { time: '1:1', note: 'Eb3', dur: '8n' },
+                    { time: '1:2', note: 'C3', dur: '4n' }
+                ];
+
+                bossBgmLoop = new Tone.Part((time, value) => {
+                    if (!audioMuted && (boss || gameState === 'BOSS_WARNING')) {
+                        bossSynth.triggerAttackRelease(value.note, value.dur, time);
+                    }
+                }, bossNotes);
+                bossBgmLoop.loop = true;
+                bossBgmLoop.loopEnd = '2m';
+
+                Tone.Transport.bpm.value = 135;
+                Tone.Transport.start();
+
+                audioInitialized = true;
+            } catch (e) {
+                console.log('Audio init postponed:', e);
+            }
+        }
+
+        function playSound(type) {
+            if (audioMuted || !audioInitialized) return;
+            try {
+                if (type === 'shoot') shootSynth?.triggerAttackRelease('C5', '16n');
+                if (type === 'hit') hitSynth?.triggerAttackRelease('C2', '8n');
+                if (type === 'explosion') explosionSynth?.triggerAttackRelease('16n');
+                if (type === 'warning') warningSynth?.triggerAttackRelease('A3', '8n');
+            } catch (e) {}
+        }
+
+        function startBgm() {
+            if (!audioInitialized) initAudioEngine();
+            try {
+                if (bgmLoop) bgmLoop.start(0);
+            } catch (e) {}
+        }
+
+        function startBossBgm() {
+            try {
+                if (bgmLoop) bgmLoop.stop();
+                if (bossBgmLoop) bossBgmLoop.start(0);
+            } catch (e) {}
+        }
+
+        function stopAllBgm() {
+            try {
+                if (bgmLoop) bgmLoop.stop();
+                if (bossBgmLoop) bossBgmLoop.stop();
+            } catch (e) {}
+        }
+
+        soundToggleBtn.addEventListener('click', () => {
+            audioMuted = !audioMuted;
+            if (audioMuted) {
+                soundIcon.className = 'fas fa-volume-mute';
+                soundStatus.innerText = 'OFF';
+            } else {
+                soundIcon.className = 'fas fa-volume-up';
+                soundStatus.innerText = 'ON';
+                if (!audioInitialized) initAudioEngine();
+            }
+        });
+
+        function randomRange(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function calculateDistance(x1, y1, x2, y2) {
+            return Math.hypot(x2 - x1, y2 - y1);
+        }
+
+        class Player {
+            constructor() {
+                this.width = 44;
+                this.height = 44;
+                this.x = LOGICAL_WIDTH / 2;
+                this.y = LOGICAL_HEIGHT - this.height - 40;
+                this.speed = 6.5;
+                this.lastShotTime = 0;
+                this.fireRate = 180; 
+                this.invulnerable = false;
+                this.invulnerableTimer = 0;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                if (this.invulnerable && Math.floor(Date.now() / 80) % 2 === 0) {
+                    ctx.globalAlpha = 0.4;
+                }
+
+                const time = Date.now() * 0.06;
+                const flap = Math.sin(time) * 0.4;
+
+                ctx.shadowColor = '#80DEEA';
+                ctx.shadowBlur = 8;
+
+                // Dragonfly Wings
+                ctx.fillStyle = 'rgba(200, 255, 255, 0.75)';
+                ctx.strokeStyle = 'rgba(128, 222, 234, 0.9)';
+                ctx.lineWidth = 1.5;
+                
+                const drawWing = (x, y, radiusX, radiusY, rotation) => {
+                    ctx.beginPath();
+                    ctx.ellipse(x, y, radiusX, radiusY, rotation, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                };
+
+                drawWing(-15, -6, 26, 7, flap - 0.2);
+                drawWing(15, -6, 26, 7, -flap + 0.2);
+                drawWing(-12, 10, 20, 6, flap + 0.3);
+                drawWing(12, 10, 20, 6, -flap - 0.3);
+
+                ctx.shadowBlur = 0;
+
+                // Dragonfly body
+                ctx.fillStyle = '#FFD54F';
+                ctx.beginPath();
+                ctx.ellipse(0, 8, 6, 24, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Head
+                ctx.fillStyle = '#2E7D32';
+                ctx.beginPath();
+                ctx.arc(0, -18, 9, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Goggles
+                ctx.fillStyle = '#00E676';
+                ctx.beginPath();
+                ctx.arc(-4, -20, 3.5, 0, Math.PI * 2);
+                ctx.arc(4, -20, 3.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+
+                ctx.restore();
+            }
+
+            update(deltaTime) {
+                let dx = 0; let dy = 0;
+
+                if (keys.ArrowLeft || keys.a) dx -= 1;
+                if (keys.ArrowRight || keys.d) dx += 1;
+                if (keys.ArrowUp || keys.w) dy -= 1;
+                if (keys.ArrowDown || keys.s) dy += 1;
+
+                if (dx !== 0 && dy !== 0) {
+                    const length = Math.sqrt(dx * dx + dy * dy);
+                    dx /= length; dy /= length;
+                }
+
+                if (joystickActive) {
+                    dx = joystickVector.x;
+                    dy = joystickVector.y;
+                }
+
+                this.x += dx * this.speed * (deltaTime / MS_PER_FRAME);
+                this.y += dy * this.speed * (deltaTime / MS_PER_FRAME);
+
+                this.x = Math.max(this.width / 2, Math.min(LOGICAL_WIDTH - this.width / 2, this.x));
+                this.y = Math.max(this.height / 2, Math.min(LOGICAL_HEIGHT - this.height / 2, this.y));
+
+                if ((keys[' '] || isMobileFiring) && Date.now() - this.lastShotTime > this.fireRate) {
+                    this.shoot();
+                }
+
+                if (this.invulnerable) {
+                    this.invulnerableTimer -= deltaTime;
+                    if (this.invulnerableTimer <= 0) this.invulnerable = false;
+                }
+            }
+
+            shoot() {
+                projectiles.push(new Projectile(this.x, this.y - 25, -90));
+                this.lastShotTime = Date.now();
+                playSound('shoot');
+                createParticles(this.x, this.y - 25, '#80DEEA', 3, 1.5, 'water');
+            }
+            
+            takeDamage() {
+                if (this.invulnerable) return;
+                lives--;
+                updateHUDLives();
+                playSound('hit');
+                createParticles(this.x, this.y, '#FF5252', 20, 4, 'explosion');
+                
+                if (lives <= 0) endGame();
+                else {
+                    this.invulnerable = true;
+                    this.invulnerableTimer = 2000;
+                }
+            }
+        }
+
+        class Projectile {
+            constructor(x, y, angle) {
+                this.x = x;
+                this.y = y;
+                this.radius = 6;
+                this.speed = 13;
+                const radian = angle * Math.PI / 180;
+                this.velocity = { x: Math.cos(radian) * this.speed, y: Math.sin(radian) * this.speed };
+                this.markedForDeletion = false;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.fillStyle = '#00E5FF';
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = '#E0F7FA';
+                ctx.beginPath();
+                ctx.arc(-2, -2, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            update(deltaTime) {
+                const speedFactor = deltaTime / MS_PER_FRAME;
+                this.x += this.velocity.x * speedFactor;
+                this.y += this.velocity.y * speedFactor;
+
+                if (this.x < -10 || this.x > LOGICAL_WIDTH + 10 ||
+                    this.y < -10 || this.y > LOGICAL_HEIGHT + 10) {
+                    this.markedForDeletion = true;
+                }
+            }
+        }
+
+        class EnemyProjectile {
+            constructor(x, y, targetX, targetY, speed = 5) {
+                this.x = x;
+                this.y = y;
+                this.radius = 7;
+                const angle = Math.atan2(targetY - y, targetX - x);
+                this.velocity = { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed };
+                this.markedForDeletion = false;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.fillStyle = '#FF1744';
+                ctx.shadowColor = '#FF1744';
+                ctx.shadowBlur = 8;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            update(deltaTime) {
+                const speedFactor = deltaTime / MS_PER_FRAME;
+                this.x += this.velocity.x * speedFactor;
+                this.y += this.velocity.y * speedFactor;
+
+                if (this.x < -20 || this.x > LOGICAL_WIDTH + 20 ||
+                    this.y < -20 || this.y > LOGICAL_HEIGHT + 20) {
+                    this.markedForDeletion = true;
+                }
+            }
+        }
+
+        class Enemy {
+            constructor() {
+                const enemyTypes = [
+                    { emoji: '🐞', type: 'standard', hp: 1, score: 100, speed: 2.2, radius: 20, color: 'rgba(220, 53, 69, 0.45)' },
+                    { emoji: '🦋', type: 'standard', hp: 1, score: 120, speed: 1.8, radius: 24, color: 'rgba(13, 202, 240, 0.45)' },
+                    { emoji: '🐝', type: 'fast', hp: 1, score: 200, speed: 3.8, radius: 18, color: 'rgba(255, 193, 7, 0.45)' },
+                    { emoji: '🦟', type: 'fast', hp: 1, score: 250, speed: 4.2, radius: 16, color: 'rgba(108, 117, 125, 0.45)' },
+                    { emoji: '🪲', type: 'tank', hp: 4, score: 400, speed: 1.2, radius: 30, color: 'rgba(25, 135, 84, 0.45)' },
+                    { emoji: '🕷️', type: 'tank', hp: 3, score: 300, speed: 1.4, radius: 28, color: 'rgba(111, 66, 193, 0.45)' }
+                ];
+                
+                const selected = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+                this.emoji = selected.emoji; 
+                this.type = selected.type;
+                this.hp = selected.hp;
+                this.scoreValue = selected.score;
+                this.radius = selected.radius;
+                this.bgColor = selected.color;
+                
+                this.x = randomRange(this.radius, LOGICAL_WIDTH - this.radius);
+                this.y = -this.radius - 20; 
+                
+                this.speed = selected.speed * (1 + (difficultyMultiplier - 1) * 0.35);
+                this.markedForDeletion = false;
+                this.wobbleOffset = Math.random() * Math.PI * 2;
+                this.hitTimer = 0;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                if (this.type !== 'tank') {
+                    ctx.rotate(Math.sin(Date.now() * 0.01 + this.wobbleOffset) * 0.2);
+                }
+
+                // Guaranteed visible background shape fallback for all mobile browsers
+                ctx.fillStyle = this.bgColor;
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                // Cross-platform Emoji text rendering
+                ctx.font = `${Math.floor(this.radius * 1.8)}px ${EMOJI_FONT_STACK}`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(this.emoji, 0, 2);
+                
+                if (this.hitTimer > 0) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius, 0, Math.PI*2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+
+            update(deltaTime) {
+                const speedFactor = deltaTime / MS_PER_FRAME;
+                
+                if (this.type === 'fast' && player) {
+                    const dx = player.x - this.x;
+                    this.x += (dx * 0.015) * speedFactor;
+                } else if (this.type === 'standard') {
+                    this.x += Math.sin(Date.now() * 0.003 + this.wobbleOffset) * 2.2 * speedFactor;
+                }
+                
+                this.y += this.speed * speedFactor;
+                if (this.hitTimer > 0) this.hitTimer -= deltaTime;
+
+                if (this.y - this.radius > LOGICAL_HEIGHT) {
+                    this.markedForDeletion = true;
+                }
+            }
+            
+            takeDamage() {
+                this.hp--;
+                this.y -= 4;
+                this.hitTimer = 100;
+                playSound('hit');
+                
+                if (this.hp <= 0) {
+                    this.markedForDeletion = true;
+                    score += this.scoreValue;
+                    updateScoreDisplay();
+                    playSound('explosion');
+                    createParticles(this.x, this.y, '#7CB342', 15, this.radius / 5, 'splat');
+                    checkBossSpawn();
+                }
+            }
+        }
+
+        class Boss {
+            constructor() {
+                this.x = LOGICAL_WIDTH / 2;
+                this.y = -100;
+                this.targetY = 120;
+                this.radius = 65;
+                this.maxHp = 60;
+                this.hp = this.maxHp;
+                this.speed = 3;
+                this.direction = 1;
+                this.lastShotTime = 0;
+                this.fireRate = 1200;
+                this.markedForDeletion = false;
+                this.hitTimer = 0;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                const auraGlow = Math.sin(Date.now() * 0.01) * 10 + 20;
+                ctx.shadowColor = '#FF1744';
+                ctx.shadowBlur = auraGlow;
+
+                // Boss Body Base Fallback Shape
+                ctx.fillStyle = 'rgba(180, 20, 20, 0.6)';
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#FFD700';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+
+                ctx.font = `80px ${EMOJI_FONT_STACK}`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('🪲', 0, 5);
+
+                ctx.font = `40px ${EMOJI_FONT_STACK}`;
+                ctx.fillText('👑', 0, -50);
+
+                if (this.hitTimer > 0) {
+                    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+
+            update(deltaTime) {
+                const speedFactor = deltaTime / MS_PER_FRAME;
+
+                if (this.y < this.targetY) {
+                    this.y += 2 * speedFactor;
+                    return;
+                }
+
+                this.x += this.speed * this.direction * speedFactor;
+                if (this.x > LOGICAL_WIDTH - this.radius - 20) this.direction = -1;
+                if (this.x < this.radius + 20) this.direction = 1;
+
+                if (this.hitTimer > 0) this.hitTimer -= deltaTime;
+
+                if (Date.now() - this.lastShotTime > this.fireRate) {
+                    this.attack();
+                    this.lastShotTime = Date.now();
+                }
+            }
+
+            attack() {
+                playSound('warning');
+                if (player) {
+                    for (let angleOffset of [-25, 0, 25]) {
+                        const baseAngle = Math.atan2(player.y - this.y, player.x - this.x) * 180 / Math.PI;
+                        const finalRad = (baseAngle + angleOffset) * Math.PI / 180;
+                        const targetX = this.x + Math.cos(finalRad) * 300;
+                        const targetY = this.y + Math.sin(finalRad) * 300;
+                        enemyProjectiles.push(new EnemyProjectile(this.x, this.y + 20, targetX, targetY, 4.5));
+                    }
+                }
+            }
+
+            takeDamage() {
+                this.hp--;
+                this.hitTimer = 80;
+                playSound('hit');
+
+                const percent = Math.max(0, Math.floor((this.hp / this.maxHp) * 100));
+                bossHpBar.style.width = `${percent}%`;
+                bossHpPercent.innerText = `${percent}%`;
+
+                createParticles(this.x, this.y + 20, '#FFD54F', 4, 2, 'splat');
+
+                if (this.hp <= 0) {
+                    this.markedForDeletion = true;
+                    score += 5000;
+                    updateScoreDisplay();
+                    playSound('explosion');
+                    createParticles(this.x, this.y, '#FF1744', 60, 6, 'explosion');
+                    
+                    setTimeout(() => {
+                        bossHealthContainer.classList.add('opacity-0');
+                        sceneIndicator.innerText = "🎉 昆虫大魔王撃破！平和が訪れた！ 🎉";
+                    }, 500);
+                }
+            }
+        }
+
+        class Particle {
+            constructor(x, y, color, speedMultiplier, style) {
+                this.x = x;
+                this.y = y;
+                this.radius = randomRange(2, style === 'water' ? 4 : 6);
+                this.color = color;
+                this.style = style;
+                const angle = randomRange(0, Math.PI * 2);
+                const speed = randomRange(1, 5) * speedMultiplier;
+                this.velocity = { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed };
+                this.alpha = 1;
+                this.decay = randomRange(0.02, 0.05);
+                this.markedForDeletion = false;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+
+            update(deltaTime) {
+                const speedFactor = deltaTime / MS_PER_FRAME;
+                this.x += this.velocity.x * speedFactor;
+                this.y += this.velocity.y * speedFactor;
+                this.alpha -= this.decay * speedFactor;
+                if (this.alpha <= 0) this.markedForDeletion = true;
+            }
+        }
+
+        class NatureElement {
+            constructor() {
+                this.x = randomRange(0, LOGICAL_WIDTH);
+                this.y = randomRange(0, LOGICAL_HEIGHT);
+                this.size = randomRange(3, 8);
+                this.speed = randomRange(1, 4);
+                this.offset = Math.random() * 100;
+            }
+            
+            draw(biome) {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                if (biome === 'grassland') {
+                    ctx.fillStyle = 'rgba(129, 199, 132, 0.6)';
+                    ctx.rotate(this.y * 0.02 + this.offset);
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, this.size, this.size/2, 0, 0, Math.PI*2);
+                    ctx.fill();
+                } else if (biome === 'river') {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
+                    ctx.fillRect(-this.size, 0, this.size*2.5, 2);
+                } else {
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.size, 0, Math.PI*2);
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+            
+            update(deltaTime, biome) {
+                const speedFactor = deltaTime / MS_PER_FRAME;
+                let dy = this.speed;
+                let dx = 0;
+                
+                if (biome === 'grassland') {
+                    dx = Math.sin(Date.now() * 0.001 + this.offset) * 1.5;
+                } else if (biome === 'river') {
+                    dy = this.speed * 2.8;
+                } else {
+                    dy = -this.speed * 0.8;
+                    dx = Math.sin(Date.now() * 0.002 + this.offset) * 0.5;
+                }
+                
+                this.y += dy * speedFactor;
+                this.x += dx * speedFactor;
+
+                if (dy > 0 && this.y > LOGICAL_HEIGHT + 10) {
+                    this.y = -10; this.x = randomRange(0, LOGICAL_WIDTH);
+                } else if (dy < 0 && this.y < -10) {
+                    this.y = LOGICAL_HEIGHT + 10; this.x = randomRange(0, LOGICAL_WIDTH);
+                }
+            }
+        }
+
+        function createParticles(x, y, color, count, speed, style) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, color, speed, style));
+            }
+        }
+
+        function initBackground() {
+            natureElements = [];
+            for (let i = 0; i < 50; i++) {
+                natureElements.push(new NatureElement());
+            }
+        }
+
+        function checkBossSpawn() {
+            if (score >= 2000 && !bossSpawned && !boss) {
+                bossSpawned = true;
+                triggerBossWarning();
+            }
+        }
+
+        function triggerBossWarning() {
+            gameState = 'BOSS_WARNING';
+            warningOverlay.classList.remove('hidden');
+            playSound('warning');
+            
+            setTimeout(() => {
+                warningOverlay.classList.add('hidden');
+                gameState = 'PLAYING';
+                boss = new Boss();
+                currentBiome = 'bossCastle';
+                sceneIndicator.innerText = "👑 決戦！ 昆虫大魔王 城 👑";
+                bossHealthContainer.classList.remove('opacity-0');
+                startBossBgm();
+            }, 3000);
+        }
+
+        function updateScoreDisplay() {
+            scoreDisplay.innerText = score;
+            
+            if (!bossSpawned) {
+                if (score < 800) {
+                    currentBiome = 'grassland';
+                    sceneIndicator.innerText = "🌿 ステージ 1: 平穏な草原 🌿";
+                } else if (score < 2000) {
+                    currentBiome = 'river';
+                    sceneIndicator.innerText = "🌊 ステージ 2: 清流の川辺 🌊";
+                }
+            }
+        }
+
+        function updateHUDLives() {
+            livesContainer.innerHTML = '';
+            for (let i = 0; i < lives; i++) {
+                livesContainer.innerHTML += '<i class="fas fa-heart mr-1"></i>';
+            }
+        }
+
+        function resetGame() {
+            player = new Player();
+            projectiles = [];
+            enemyProjectiles = [];
+            enemies = [];
+            particles = [];
+            boss = null;
+            score = 0;
+            lives = 3;
+            difficultyMultiplier = 1;
+            bossSpawned = false;
+            currentBiome = 'grassland';
+            
+            updateScoreDisplay();
+            updateHUDLives();
+            bossHealthContainer.classList.add('opacity-0');
+            
+            gameState = 'PLAYING';
+            startScreen.classList.add('hidden');
+            gameOverScreen.classList.add('hidden');
+            
+            lastTime = performance.now();
+            lastEnemySpawnTime = performance.now();
+            
+            initBackground();
+            startBgm();
+        }
+
+        function endGame() {
+            gameState = 'GAMEOVER';
+            stopAllBgm();
+            finalScoreDisplay.innerText = score;
+            if (bossSpawned && boss && boss.hp <= 0) {
+                gameOverSubtext.innerText = "🎉 見事に昆虫大魔王を撃破しました！ 🎉";
+            } else {
+                gameOverSubtext.innerText = "昆虫大魔王の野望を止められなかった...";
+            }
+            gameOverScreen.classList.remove('hidden');
+        }
+
+        function handleCollisions() {
+            // Player Shots vs Enemies
+            projectiles.forEach(p => {
+                enemies.forEach(e => {
+                    if (p.markedForDeletion || e.markedForDeletion) return;
+                    if (calculateDistance(p.x, p.y, e.x, e.y) < p.radius + e.radius * 0.8) {
+                        p.markedForDeletion = true;
+                        e.takeDamage();
+                    }
+                });
+
+                // Player Shots vs Boss
+                if (boss && !p.markedForDeletion) {
+                    if (calculateDistance(p.x, p.y, boss.x, boss.y + 10) < p.radius + boss.radius) {
+                        p.markedForDeletion = true;
+                        boss.takeDamage();
+                    }
+                }
+            });
+
+            // Player vs Enemies
+            if (player && !player.invulnerable) {
+                enemies.forEach(e => {
+                    if (e.markedForDeletion) return;
+                    if (calculateDistance(player.x, player.y, e.x, e.y) < (player.width / 2) + e.radius * 0.7) {
+                        e.takeDamage();
+                        player.takeDamage();
+                    }
+                });
+
+                // Player vs Enemy Bullets
+                enemyProjectiles.forEach(ep => {
+                    if (ep.markedForDeletion) return;
+                    if (calculateDistance(player.x, player.y, ep.x, ep.y) < (player.width / 2) + ep.radius) {
+                        ep.markedForDeletion = true;
+                        player.takeDamage();
+                    }
+                });
+
+                // Player vs Boss Body
+                if (boss) {
+                    if (calculateDistance(player.x, player.y, boss.x, boss.y) < (player.width / 2) + boss.radius) {
+                        player.takeDamage();
+                    }
+                }
+            }
+        }
+
+        function drawBackground() {
+            let c1, c2;
+            if (currentBiome === 'grassland') {
+                c1 = '#2E7D32'; c2 = '#1B5E20';
+            } else if (currentBiome === 'river') {
+                c1 = '#0288D1'; c2 = '#01579B';
+            } else if (currentBiome === 'sea') {
+                c1 = '#1565C0'; c2 = '#0D47A1';
+            } else {
+                c1 = '#4A148C'; c2 = '#1A237E';
+            }
+            
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+            gradient.addColorStop(0, c1);
+            gradient.addColorStop(1, c2);
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            let deltaTime = timestamp - lastTime;
+            lastTime = timestamp;
+
+            if (isNaN(deltaTime) || deltaTime <= 0 || deltaTime > 100) {
+                deltaTime = MS_PER_FRAME; 
+            }
+
+            drawBackground();
+
+            natureElements.forEach(el => {
+                el.update(deltaTime, currentBiome);
+                el.draw(currentBiome);
+            });
+
+            if (gameState === 'PLAYING') {
+                player.update(deltaTime);
+                player.draw();
+
+                // Spawn regular enemies
+                if (!boss && timestamp - lastEnemySpawnTime > enemySpawnRate) {
+                    enemies.push(new Enemy());
+                    lastEnemySpawnTime = timestamp;
+                }
+
+                if (boss) {
+                    boss.update(deltaTime);
+                    boss.draw();
+                }
+
+                projectiles.forEach(p => p.update(deltaTime));
+                enemyProjectiles.forEach(ep => ep.update(deltaTime));
+                enemies.forEach(e => e.update(deltaTime));
+                particles.forEach(p => p.update(deltaTime));
+
+                handleCollisions();
+
+                projectiles.forEach(p => p.draw());
+                enemyProjectiles.forEach(ep => ep.draw());
+                enemies.forEach(e => e.draw());
+                particles.forEach(p => p.draw());
+
+                projectiles = projectiles.filter(p => !p.markedForDeletion);
+                enemyProjectiles = enemyProjectiles.filter(ep => !ep.markedForDeletion);
+                enemies = enemies.filter(e => !e.markedForDeletion);
+                particles = particles.filter(p => !p.markedForDeletion);
+                if (boss && boss.markedForDeletion) boss = null;
+                
+            } else if (gameState === 'GAMEOVER') {
+                particles.forEach(p => {
+                    p.update(deltaTime);
+                    p.draw();
+                });
+            }
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function resizeCanvas() {
+            canvas.width = LOGICAL_WIDTH;
+            canvas.height = LOGICAL_HEIGHT;
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (keys.hasOwnProperty(e.key)) keys[e.key] = false;
+        });
+
+        startBtn.addEventListener('click', () => {
+            initAudioEngine();
+            resetGame();
+            if (!animationId) animationId = requestAnimationFrame(gameLoop);
+        });
+
+        restartBtn.addEventListener('click', () => {
+            initAudioEngine();
+            resetGame();
+        });
+        
+        window.addEventListener('resize', resizeCanvas);
+
+        // Joystick Touch Controls
+        const joystickCenter = { x: 0, y: 0 };
+        const maxJoystickRadius = 70;
+
+        joystickArea.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.changedTouches[0];
+            const rect = joystickArea.getBoundingClientRect();
+            joystickCenter.x = rect.left + rect.width / 2;
+            joystickCenter.y = rect.top + rect.height / 2;
+            joystickActive = true;
+            updateJoystick(touch.clientX, touch.clientY);
+        }, {passive: false});
+
+        joystickArea.addEventListener('touchmove', (e) => {
+            if (!joystickActive) return;
+            e.preventDefault();
+            const touch = e.changedTouches[0];
+            updateJoystick(touch.clientX, touch.clientY);
+        }, {passive: false});
+
+        function handleJoystickEnd() {
+            joystickActive = false;
+            joystickVector = { x: 0, y: 0 };
+            joystickKnob.style.transform = `translate(-50%, -50%)`;
+        }
+
+        joystickArea.addEventListener('touchend', handleJoystickEnd);
+        joystickArea.addEventListener('touchcancel', handleJoystickEnd);
+
+        function updateJoystick(touchX, touchY) {
+            let dx = touchX - joystickCenter.x;
+            let dy = touchY - joystickCenter.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance > maxJoystickRadius) {
+                dx = (dx / distance) * maxJoystickRadius;
+                dy = (dy / distance) * maxJoystickRadius;
+            }
+
+            joystickKnob.style.transform = `translate(calc(-50% + ${dx}px), calc(-50% + ${dy}px))`;
+            joystickVector.x = dx / maxJoystickRadius;
+            joystickVector.y = dy / maxJoystickRadius;
+        }
+
+        fireBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            isMobileFiring = true;
+        }, {passive: false});
+
+        fireBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            isMobileFiring = false;
+        });
+        fireBtn.addEventListener('touchcancel', () => { isMobileFiring = false; });
+
+        // Initialize
+        resizeCanvas();
+        initBackground();
+        updateHUDLives();
+        lastTime = performance.now();
+        animationId = requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
