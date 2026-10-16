@@ -3,19 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ムシムシウォーズ～昆虫博士は昆虫大魔王を倒せるか？～</title>
+    <title>ムシムシウォーズ - NEON CYBER EDITION</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --neon-cyan: #00f3ff;
+            --neon-magenta: #ff007f;
+            --neon-purple: #9d4edd;
+            --neon-yellow: #ffe600;
+            --neon-green: #00ff88;
+        }
+
         body {
-            background-color: #0b1d0c;
+            background-color: #04040c;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(16, 20, 48, 0.6) 0%, #030309 100%),
+                linear-gradient(rgba(0, 243, 255, 0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.04) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
             color: #fff;
             overflow: hidden;
             touch-action: none;
-            font-family: 'Hiragino Sans', 'Meiryo', sans-serif;
+            font-family: 'Rajdhani', 'Hiragino Sans', 'Meiryo', sans-serif;
             user-select: none;
         }
+
         #game-container {
             position: relative;
             width: 100vw;
@@ -23,17 +40,35 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            background: #123514; 
+            background: transparent;
         }
+
+        /* Cyberpunk Scanline Effect */
+        #game-container::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            z-index: 20;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
         canvas {
             background-color: transparent;
-            box-shadow: 0 0 30px rgba(0, 255, 100, 0.2), 0 0 10px rgba(0,0,0,0.8);
+            box-shadow: 
+                0 0 25px rgba(0, 243, 255, 0.45),
+                0 0 60px rgba(255, 0, 127, 0.2),
+                inset 0 0 25px rgba(0, 243, 255, 0.15);
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
             border-radius: 12px;
-            border: 3px solid #4CAF50;
+            border: 2px solid var(--neon-cyan);
         }
+
         #ui-layer {
             position: absolute;
             top: 0;
@@ -46,6 +81,7 @@
             justify-content: space-between;
             padding: 16px;
             box-sizing: border-box;
+            z-index: 15;
         }
         
         .overlay-screen {
@@ -54,45 +90,107 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(8, 24, 10, 0.88);
-            backdrop-filter: blur(4px);
+            background: rgba(3, 5, 18, 0.9);
+            backdrop-filter: blur(10px);
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            z-index: 10;
+            z-index: 30;
             pointer-events: auto;
         }
 
         .hud-text {
-            font-family: 'Arial Black', Impact, sans-serif;
-            text-shadow: 2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000, 0 0 10px rgba(255,255,255,0.5);
+            font-family: 'Orbitron', 'Rajdhani', sans-serif;
+            letter-spacing: 1.5px;
+            text-shadow: 
+                0 0 6px rgba(0, 243, 255, 0.8),
+                0 0 15px rgba(0, 243, 255, 0.4),
+                2px 2px 2px #000;
             pointer-events: auto;
+        }
+
+        .neon-card {
+            background: rgba(10, 15, 35, 0.8);
+            border: 1px solid rgba(0, 243, 255, 0.5);
+            box-shadow: 
+                0 0 20px rgba(0, 243, 255, 0.15),
+                inset 0 0 15px rgba(0, 243, 255, 0.08);
+            backdrop-filter: blur(8px);
+            position: relative;
+        }
+        .neon-card::before {
+            content: '';
+            position: absolute;
+            top: -2px; left: -2px;
+            width: 12px; height: 12px;
+            border-top: 2px solid var(--neon-cyan);
+            border-left: 2px solid var(--neon-cyan);
+        }
+        .neon-card::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; right: -2px;
+            width: 12px; height: 12px;
+            border-bottom: 2px solid var(--neon-magenta);
+            border-right: 2px solid var(--neon-magenta);
         }
 
         .game-btn {
-            background: linear-gradient(135deg, #FF9800 0%, #F57C00 50%, #E65100 100%);
+            background: linear-gradient(135deg, rgba(255, 0, 127, 0.9) 0%, rgba(121, 40, 202, 0.95) 50%, rgba(0, 243, 255, 0.9) 100%);
             color: #FFF;
-            padding: 14px 36px;
-            border-radius: 50px;
-            font-weight: 900;
-            letter-spacing: 2px;
-            border: 3px solid #FFE082;
-            box-shadow: 0 6px 0 #B71C1C, 0 10px 20px rgba(0,0,0,0.6);
-            transition: all 0.15s ease;
+            padding: 14px 40px;
+            border-radius: 8px;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 800;
+            letter-spacing: 2.5px;
+            text-transform: uppercase;
+            border: 2px solid var(--neon-cyan);
+            box-shadow: 
+                0 0 15px rgba(0, 243, 255, 0.7),
+                0 0 35px rgba(255, 0, 127, 0.4),
+                inset 0 0 12px rgba(255, 255, 255, 0.4);
+            transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             cursor: pointer;
             pointer-events: auto;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            text-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+            position: relative;
+            overflow: hidden;
         }
 
         .game-btn:hover {
-            transform: translateY(-2px) scale(1.05);
-            box-shadow: 0 8px 0 #B71C1C, 0 12px 25px rgba(255,152,0,0.5);
+            transform: translateY(-3px) scale(1.04);
+            box-shadow: 
+                0 0 25px var(--neon-cyan),
+                0 0 50px var(--neon-magenta),
+                inset 0 0 20px rgba(255, 255, 255, 0.6);
+            border-color: #FFF;
         }
 
         .game-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 #B71C1C, 0 5px 10px rgba(0,0,0,0.4);
+            transform: translateY(2px) scale(0.98);
+            box-shadow: 0 0 10px var(--neon-cyan);
+        }
+
+        @keyframes neonTitlePulse {
+            0%, 100% {
+                text-shadow: 
+                    0 0 10px #00f3ff,
+                    0 0 20px #00f3ff,
+                    0 0 40px #ff007f,
+                    0 0 80px #ff007f;
+            }
+            50% {
+                text-shadow: 
+                    0 0 15px #00f3ff,
+                    0 0 30px #00f3ff,
+                    0 0 60px #ff007f,
+                    0 0 100px #ff007f;
+            }
+        }
+
+        .neon-title-anim {
+            animation: neonTitlePulse 2.5s infinite alternate;
         }
 
         /* Boss Health Bar */
@@ -111,24 +209,25 @@
             justify-content: space-between;
             align-items: center;
             pointer-events: none;
-            z-index: 5;
+            z-index: 25;
         }
 
         .mobile-joystick-area {
-            width: 140px;
-            height: 140px;
+            width: 130px;
+            height: 130px;
             border-radius: 50%;
-            background-color: rgba(255, 255, 255, 0.15);
-            border: 3px solid rgba(255, 255, 255, 0.4);
+            background-color: rgba(0, 243, 255, 0.08);
+            border: 2px solid rgba(0, 243, 255, 0.5);
+            box-shadow: 0 0 18px rgba(0, 243, 255, 0.25), inset 0 0 15px rgba(0, 243, 255, 0.1);
             position: relative;
             pointer-events: auto;
             touch-action: none;
         }
 
         .mobile-joystick-knob {
-            width: 55px;
-            height: 55px;
-            background: radial-gradient(circle, #81C784 0%, #388E3C 100%);
+            width: 52px;
+            height: 52px;
+            background: radial-gradient(circle, #00f3ff 0%, #0077b6 100%);
             border: 2px solid #FFF;
             border-radius: 50%;
             position: absolute;
@@ -136,15 +235,15 @@
             left: 50%;
             transform: translate(-50%, -50%);
             pointer-events: none;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            box-shadow: 0 0 15px #00f3ff;
         }
 
         .mobile-fire-btn {
             width: 85px;
             height: 85px;
             border-radius: 50%;
-            background: radial-gradient(circle, #4FC3F7 0%, #0288D1 100%);
-            border: 3px solid #E0F7FA;
+            background: radial-gradient(circle, #ff007f 0%, #7928ca 100%);
+            border: 2px solid var(--neon-cyan);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -152,11 +251,11 @@
             color: #FFF;
             pointer-events: auto;
             touch-action: none;
-            box-shadow: 0 6px 0 #01579B, 0 8px 15px rgba(0,0,0,0.5);
+            box-shadow: 0 0 20px rgba(255, 0, 127, 0.7), inset 0 0 10px rgba(255, 255, 255, 0.4);
         }
         .mobile-fire-btn:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 #01579B, 0 4px 8px rgba(0,0,0,0.5);
+            transform: translateY(3px) scale(0.95);
+            box-shadow: 0 0 10px rgba(255, 0, 127, 0.5);
         }
 
         @media (max-width: 768px) {
@@ -166,8 +265,16 @@
 
         /* Warning Banner */
         @keyframes flashWarning {
-            0%, 100% { opacity: 0.9; transform: scale(1); }
-            50% { opacity: 0.3; transform: scale(1.05); }
+            0%, 100% { 
+                opacity: 0.95; 
+                transform: scale(1);
+                filter: drop-shadow(0 0 15px #ff0055);
+            }
+            50% { 
+                opacity: 0.4; 
+                transform: scale(1.04);
+                filter: drop-shadow(0 0 35px #ff0055);
+            }
         }
         .warning-anim {
             animation: flashWarning 0.6s infinite alternate;
@@ -182,104 +289,117 @@
             <!-- HUD Header -->
             <div class="flex justify-between items-start w-full">
                 <div>
-                    <div class="hud-text text-lg md:text-2xl text-yellow-300 flex items-center">
-                        <span class="mr-2">🏆 SCORE:</span> <span id="scoreDisplay">0</span>
+                    <div class="hud-text text-lg md:text-2xl text-cyan-300 flex items-center">
+                        <span class="mr-2 text-yellow-300">⚡ SCORE:</span> <span id="scoreDisplay" class="font-bold">0</span>
                     </div>
-                    <div class="hud-text text-sm md:text-base text-green-300">
-                        👨‍🔬 昆虫博士の挑戦
+                    <div class="hud-text text-xs md:text-sm text-emerald-400 opacity-90 mt-0.5">
+                        <i class="fas fa-microchip mr-1"></i> CYBER LAB // INSECT DEFENSE
                     </div>
                 </div>
 
                 <div class="flex flex-col items-end">
-                    <div class="hud-text text-lg md:text-2xl text-red-400 flex items-center mb-1">
-                        <span class="mr-2">トンボ号:</span>
-                        <div id="livesContainer" class="flex gap-1 text-red-500">
+                    <div class="hud-text text-lg md:text-2xl text-pink-400 flex items-center mb-1">
+                        <span class="mr-2 text-xs md:text-sm text-cyan-300 font-sans tracking-widest uppercase">STEEL DRAGONFLY:</span>
+                        <div id="livesContainer" class="flex gap-1.5 text-pink-500 drop-shadow-[0_0_8px_rgba(255,0,127,0.8)]">
                             <i class="fas fa-heart"></i>
                             <i class="fas fa-heart"></i>
                             <i class="fas fa-heart"></i>
                         </div>
                     </div>
                     <!-- Audio Toggle Button -->
-                    <button id="soundToggleBtn" class="bg-gray-800 hover:bg-gray-700 border border-gray-500 text-yellow-300 text-xs md:text-sm px-3 py-1 rounded-full flex items-center gap-1 shadow pointer-events-auto">
-                        <i class="fas fa-volume-up" id="soundIcon"></i> SOUND: <span id="soundStatus">ON</span>
+                    <button id="soundToggleBtn" class="bg-gray-900/90 hover:bg-cyan-950/80 border border-cyan-400/70 text-cyan-300 text-xs px-3 py-1 rounded font-mono flex items-center gap-1.5 shadow-[0_0_10px_rgba(0,243,255,0.3)] transition-all pointer-events-auto">
+                        <i class="fas fa-volume-up text-pink-400" id="soundIcon"></i> AUDIO: <span id="soundStatus" class="font-bold text-yellow-300">ON</span>
                     </button>
                 </div>
             </div>
 
             <!-- Boss Health Bar -->
             <div id="bossHealthContainer" class="w-full max-w-md mx-auto my-1 opacity-0 pointer-events-none">
-                <div class="flex justify-between items-center text-xs md:text-sm font-bold text-red-400 mb-1 px-1 hud-text">
-                    <span>👑 昆虫大魔王 (HERACLES)</span>
-                    <span id="bossHpPercent">100%</span>
+                <div class="flex justify-between items-center text-xs md:text-sm font-bold text-pink-400 mb-1 px-1 hud-text">
+                    <span class="flex items-center gap-1 text-red-400 drop-shadow-[0_0_8px_#ff0055]">
+                        <i class="fas fa-skull"></i> 昆虫大魔王 [HERACLES CORE]
+                    </span>
+                    <span id="bossHpPercent" class="text-yellow-300">100%</span>
                 </div>
-                <div class="w-full bg-gray-900 h-5 rounded-full border-2 border-red-500 overflow-hidden shadow-lg">
-                    <div id="bossHpBar" class="bg-gradient-to-r from-yellow-500 via-red-500 to-red-700 h-full w-full transition-all duration-150"></div>
+                <div class="w-full bg-gray-950 h-5 rounded-full border border-pink-500/80 p-0.5 shadow-[0_0_15px_rgba(255,0,127,0.5)]">
+                    <div id="bossHpBar" class="bg-gradient-to-r from-pink-500 via-purple-500 to-cyan-400 h-full w-full rounded-full transition-all duration-150 shadow-[0_0_10px_#ff007f]"></div>
                 </div>
             </div>
 
             <!-- Stage & Biome Indicator -->
-            <div id="sceneIndicator" class="hud-text text-center text-lg md:text-xl text-emerald-300 mt-1" style="text-shadow: 0 0 8px rgba(0,0,0,0.8);">
-                🌿 ステージ 1: 平穏な草原 🌿
+            <div id="sceneIndicator" class="hud-text text-center text-base md:text-xl text-cyan-300 mt-1 font-bold tracking-wider" style="text-shadow: 0 0 12px rgba(0, 243, 255, 0.9);">
+                ❖ STAGE 1: CYBER MATRIX ❖
             </div>
 
             <!-- Instructions -->
-            <div id="instructions" class="hud-text text-center text-gray-200 text-xs md:text-sm mt-auto mb-2 opacity-90">
-                <p>操作: [W][A][S][D] または 矢印キーで移動 | [Space] で水滴ショット発射！</p>
+            <div id="instructions" class="hud-text text-center text-cyan-200/80 text-xs md:text-sm mt-auto mb-2 tracking-wider">
+                <p>CONTROLS: [W][A][S][D] / 矢印キーで機動 | [SPACE] でネオンプラズマ発射</p>
             </div>
         </div>
 
         <!-- Start Screen -->
         <div id="startScreen" class="overlay-screen">
             <div class="text-center px-4 max-w-xl">
-                <div class="inline-block bg-yellow-500 text-gray-900 text-xs md:text-sm font-black px-4 py-1 rounded-full mb-3 tracking-widest shadow-md">
-                    昆虫シューティングアクション
+                <div class="inline-block bg-cyan-950/90 text-cyan-300 border border-cyan-400/60 text-xs md:text-sm font-bold px-4 py-1 rounded-full mb-3 tracking-widest shadow-[0_0_15px_rgba(0,243,255,0.4)]">
+                    ⚡ NEON CYBER SHOOTING // V2.0 ⚡
                 </div>
-                <h1 class="text-3xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-yellow-300 via-amber-400 to-red-500 mb-2 leading-tight tracking-wide" style="filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.8));">
+                <h1 class="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-pink-400 to-purple-400 mb-2 leading-tight tracking-wider neon-title-anim">
                     ムシムシウォーズ
                 </h1>
-                <p class="text-sm md:text-xl font-bold text-emerald-300 mb-6 tracking-wide">
-                    ～昆虫博士は昆虫大魔王を倒せるか？～
+                <p class="text-xs md:text-base font-bold text-pink-400 mb-6 tracking-widest uppercase" style="text-shadow: 0 0 10px #ff007f;">
+                    ～CYBER DRAGONFLY VS MEGA BUG CORE～
                 </p>
                 
-                <div class="bg-black/60 border-2 border-emerald-500/50 rounded-xl p-4 mb-6 text-left text-xs md:text-sm text-gray-200 space-y-2">
-                    <p class="text-yellow-300 font-bold flex items-center">👨‍🔬 昆虫博士のメモ:</p>
-                    <p>「大変じゃ！暴走した昆虫軍団が自然を荒らしておる！相棒の『トンボ号』に乗り込み、迫りくる虫たちを沈めるのじゃ！スコアを稼ぐと伝説の<span class="text-red-400 font-bold">『昆虫大魔王』</span>が姿を現すぞ！」</p>
+                <div class="neon-card rounded-lg p-5 mb-6 text-left text-xs md:text-sm text-gray-200 space-y-2.5">
+                    <p class="text-yellow-300 font-bold flex items-center gap-1.5 tracking-wider">
+                        <i class="fas fa-terminal"></i> 昆虫博士の電脳指令ログ:
+                    </p>
+                    <p class="text-gray-300 leading-relaxed">
+                        「電脳自然界に異常事態発生じゃ！暴走したサイバー昆虫軍団がコアを侵食しておる！鋼鉄とネオンエネルギーで改修された決戦機体<span class="text-cyan-300 font-bold">『鋼鉄トンボ号』</span>を緊急発進させ、敵群を沈めるのじゃ！スコアを上げれば伝説の<span class="text-pink-400 font-bold">『昆虫大魔王コア』</span>が姿を現すぞ！」
+                    </p>
                 </div>
 
-                <button id="startBtn" class="game-btn text-lg md:text-xl flex items-center justify-center mx-auto gap-2">
-                    <i class="fas fa-play"></i> 出撃！ゲーム開始
+                <button id="startBtn" class="game-btn text-base md:text-xl flex items-center justify-center mx-auto gap-3">
+                    <i class="fas fa-bolt text-yellow-300"></i> START MISSION // 出撃
                 </button>
             </div>
         </div>
 
         <!-- Boss Warning Banner Overlay -->
-        <div id="warningOverlay" class="overlay-screen bg-red-950/80 hidden">
+        <div id="warningOverlay" class="overlay-screen bg-black/90 hidden">
             <div class="text-center warning-anim">
-                <h2 class="text-5xl md:text-7xl font-black text-red-500 tracking-wider mb-2" style="text-shadow: 0 0 20px #FF0000;">
+                <div class="inline-block text-pink-500 text-sm md:text-base font-bold tracking-widest border border-pink-500 px-4 py-1 rounded mb-3 shadow-[0_0_15px_#ff0055]">
+                    EMERGENCY ALERT // CODE: HERACLES
+                </div>
+                <h2 class="text-5xl md:text-7xl font-black text-red-500 tracking-widest mb-2 font-mono" style="text-shadow: 0 0 30px #ff0055, 0 0 60px #ff0000;">
                     ⚠️ WARNING ⚠️
                 </h2>
-                <p class="text-2xl md:text-4xl font-extrabold text-yellow-300 tracking-widest mb-4">
-                    昆虫大魔王 降臨！！
+                <p class="text-2xl md:text-4xl font-black text-yellow-300 tracking-wider mb-4 font-mono" style="text-shadow: 0 0 15px #ffe600;">
+                    昆虫大魔王 CORE 降臨！！
                 </p>
-                <p class="text-base md:text-lg text-white font-bold">
-                    強力な攻撃を回避し、撃破せよ！
+                <p class="text-base md:text-lg text-cyan-300 font-bold tracking-wide">
+                    強力なプラズマ弾幕を回避し、中枢コアを撃破せよ！
                 </p>
             </div>
         </div>
 
         <!-- Game Over Screen -->
         <div id="gameOverScreen" class="overlay-screen hidden">
-            <h2 class="text-4xl md:text-6xl font-black text-red-500 mb-2 tracking-wide font-mono" style="text-shadow: 3px 3px 0 #000;">
-                GAME OVER
-            </h2>
-            <p id="gameOverSubtext" class="text-lg text-yellow-300 mb-4 font-bold">昆虫大魔王の野望を止められなかった...</p>
-            <div class="bg-black/60 border border-yellow-500/40 rounded-xl p-4 mb-6 text-center">
-                <div class="text-sm text-gray-400 mb-1">最終スコア</div>
-                <div id="finalScoreDisplay" class="text-3xl md:text-5xl font-black text-yellow-400 font-mono">0</div>
+            <div class="text-center px-4 max-w-md w-full">
+                <h2 class="text-4xl md:text-6xl font-black text-pink-500 mb-2 tracking-widest font-mono" style="text-shadow: 0 0 25px #ff007f, 0 0 50px #ff0055;">
+                    SYSTEM DOWN
+                </h2>
+                <p id="gameOverSubtext" class="text-sm md:text-base text-yellow-300 mb-5 font-bold tracking-wide">昆虫大魔王の侵攻を食い止められなかった...</p>
+                
+                <div class="neon-card rounded-lg p-5 mb-6 text-center">
+                    <div class="text-xs text-cyan-300 tracking-widest uppercase mb-1">TOTAL BATTLE SCORE</div>
+                    <div id="finalScoreDisplay" class="text-4xl md:text-6xl font-black text-yellow-300 font-mono tracking-wider" style="text-shadow: 0 0 15px rgba(255, 230, 0, 0.7);">0</div>
+                </div>
+
+                <button id="restartBtn" class="game-btn text-base md:text-lg flex items-center justify-center mx-auto gap-2 w-full">
+                    <i class="fas fa-redo text-yellow-300"></i> RESTART MISSION // 再挑戦
+                </button>
             </div>
-            <button id="restartBtn" class="game-btn text-base md:text-lg flex items-center justify-center gap-2">
-                <i class="fas fa-redo"></i> もう一度挑戦する
-            </button>
         </div>
 
         <!-- Mobile Controls -->
@@ -288,7 +408,7 @@
                 <div class="mobile-joystick-knob" id="joystickKnob"></div>
             </div>
             <div class="mobile-fire-btn" id="fireBtn">
-                <i class="fas fa-tint"></i>
+                <i class="fas fa-crosshairs"></i>
             </div>
         </div>
     </div>
@@ -513,12 +633,12 @@
         class Player {
             constructor() {
                 this.width = 44;
-                this.height = 44;
+                this.height = 48;
                 this.x = LOGICAL_WIDTH / 2;
                 this.y = LOGICAL_HEIGHT - this.height - 40;
-                this.speed = 6.5;
+                this.speed = 6.8;
                 this.lastShotTime = 0;
-                this.fireRate = 180; 
+                this.fireRate = 170; 
                 this.invulnerable = false;
                 this.invulnerableTimer = 0;
             }
@@ -527,56 +647,202 @@
                 ctx.save();
                 ctx.translate(this.x, this.y);
 
-                if (this.invulnerable && Math.floor(Date.now() / 80) % 2 === 0) {
-                    ctx.globalAlpha = 0.4;
+                const now = Date.now();
+                if (this.invulnerable && Math.floor(now / 80) % 2 === 0) {
+                    ctx.globalAlpha = 0.45;
                 }
 
-                const time = Date.now() * 0.06;
-                const flap = Math.sin(time) * 0.4;
+                const flap = Math.sin(now * 0.06) * 0.38;
 
-                ctx.shadowColor = '#80DEEA';
-                ctx.shadowBlur = 8;
+                // 1. Thruster Exhaust / Plasma Flame
+                const flamePulse = Math.sin(now * 0.08) * 4 + 18;
+                const thrusterGrad = ctx.createLinearGradient(0, 24, 0, 24 + flamePulse);
+                thrusterGrad.addColorStop(0, '#ffffff');
+                thrusterGrad.addColorStop(0.3, '#00f3ff');
+                thrusterGrad.addColorStop(0.7, '#7928ca');
+                thrusterGrad.addColorStop(1, 'transparent');
 
-                // Dragonfly Wings
-                ctx.fillStyle = 'rgba(200, 255, 255, 0.75)';
-                ctx.strokeStyle = 'rgba(128, 222, 234, 0.9)';
-                ctx.lineWidth = 1.5;
-                
-                const drawWing = (x, y, radiusX, radiusY, rotation) => {
+                ctx.save();
+                ctx.shadowColor = '#00f3ff';
+                ctx.shadowBlur = 12;
+                ctx.fillStyle = thrusterGrad;
+                ctx.beginPath();
+                ctx.moveTo(-4, 24);
+                ctx.lineTo(4, 24);
+                ctx.lineTo(0, 24 + flamePulse);
+                ctx.closePath();
+                ctx.fill();
+
+                // Side Verniers
+                ctx.fillStyle = 'rgba(0, 243, 255, 0.7)';
+                ctx.beginPath();
+                ctx.moveTo(-8, 16);
+                ctx.lineTo(-12, 22 + (flamePulse * 0.4));
+                ctx.lineTo(-6, 18);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(8, 16);
+                ctx.lineTo(12, 22 + (flamePulse * 0.4));
+                ctx.lineTo(6, 18);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
+
+                // 2. Cyber Neon Wings (Energy Blades)
+                const drawNeonBlade = (x, y, radiusX, radiusY, rotation, isFront) => {
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(rotation);
+
+                    ctx.shadowColor = '#00f3ff';
+                    ctx.shadowBlur = 14;
+
+                    // Neon Glow Wing Base
+                    const wingGrad = ctx.createLinearGradient(-radiusX, 0, radiusX, 0);
+                    wingGrad.addColorStop(0, 'rgba(0, 243, 255, 0.2)');
+                    wingGrad.addColorStop(0.5, 'rgba(0, 243, 255, 0.65)');
+                    wingGrad.addColorStop(0.9, 'rgba(255, 255, 255, 0.85)');
+                    wingGrad.addColorStop(1, '#00f3ff');
+
+                    ctx.fillStyle = wingGrad;
+                    ctx.strokeStyle = '#00f3ff';
+                    ctx.lineWidth = 2;
+
                     ctx.beginPath();
-                    ctx.ellipse(x, y, radiusX, radiusY, rotation, 0, Math.PI * 2);
+                    ctx.ellipse(0, 0, radiusX, radiusY, 0, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.stroke();
+
+                    // Internal Circuit / Energy Line
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(-radiusX * 0.7, 0);
+                    ctx.lineTo(radiusX * 0.7, 0);
+                    ctx.stroke();
+
+                    ctx.restore();
                 };
 
-                drawWing(-15, -6, 26, 7, flap - 0.2);
-                drawWing(15, -6, 26, 7, -flap + 0.2);
-                drawWing(-12, 10, 20, 6, flap + 0.3);
-                drawWing(12, 10, 20, 6, -flap - 0.3);
+                // Left & Right Wings (Fore and Hind)
+                drawNeonBlade(-16, -6, 28, 7, flap - 0.22, true);
+                drawNeonBlade(16, -6, 28, 7, -flap + 0.22, true);
+                drawNeonBlade(-13, 10, 22, 6, flap + 0.28, false);
+                drawNeonBlade(13, 10, 22, 6, -flap - 0.28, false);
 
-                ctx.shadowBlur = 0;
+                // 3. Steel Dragonfly Body (Titanium / Metallic Armored Segments)
+                ctx.shadowColor = '#00f3ff';
+                ctx.shadowBlur = 6;
 
-                // Dragonfly body
-                ctx.fillStyle = '#FFD54F';
+                // Abdomen (Tail segments with metallic gradient)
+                const bodyGrad = ctx.createLinearGradient(-8, 0, 8, 0);
+                bodyGrad.addColorStop(0, '#1e293b');
+                bodyGrad.addColorStop(0.3, '#64748b');
+                bodyGrad.addColorStop(0.6, '#94a3b8');
+                bodyGrad.addColorStop(1, '#0f172a');
+
+                ctx.fillStyle = bodyGrad;
+                ctx.strokeStyle = '#00f3ff';
+                ctx.lineWidth = 1.2;
+
                 ctx.beginPath();
-                ctx.ellipse(0, 8, 6, 24, 0, 0, Math.PI * 2);
+                ctx.ellipse(0, 8, 6.5, 22, 0, 0, Math.PI * 2);
                 ctx.fill();
-
-                // Head
-                ctx.fillStyle = '#2E7D32';
-                ctx.beginPath();
-                ctx.arc(0, -18, 9, 0, Math.PI * 2);
-                ctx.fill();
-
-                // Goggles
-                ctx.fillStyle = '#00E676';
-                ctx.beginPath();
-                ctx.arc(-4, -20, 3.5, 0, Math.PI * 2);
-                ctx.arc(4, -20, 3.5, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = '#333';
-                ctx.lineWidth = 1;
                 ctx.stroke();
+
+                // Segment line notches
+                ctx.strokeStyle = 'rgba(0, 243, 255, 0.8)';
+                ctx.lineWidth = 1;
+                for (let sy = -2; sy <= 18; sy += 5) {
+                    ctx.beginPath();
+                    ctx.moveTo(-4.5, sy);
+                    ctx.lineTo(4.5, sy);
+                    ctx.stroke();
+                }
+
+                // Cyber Reactor Core (Glowing Cyan on Chest)
+                ctx.fillStyle = '#00f3ff';
+                ctx.shadowColor = '#00f3ff';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(0, -6, 3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 4. Steel Armored Head (Sharp Angular Mech Visage)
+                const headGrad = ctx.createLinearGradient(-10, -18, 10, -18);
+                headGrad.addColorStop(0, '#0f172a');
+                headGrad.addColorStop(0.4, '#475569');
+                headGrad.addColorStop(0.7, '#94a3b8');
+                headGrad.addColorStop(1, '#0f172a');
+
+                ctx.fillStyle = headGrad;
+                ctx.strokeStyle = '#00f3ff';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(0, -28);
+                ctx.lineTo(9, -20);
+                ctx.lineTo(7, -11);
+                ctx.lineTo(-7, -11);
+                ctx.lineTo(-9, -20);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Antenna / Sensor Spikes
+                ctx.strokeStyle = '#94a3b8';
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(-5, -25);
+                ctx.lineTo(-11, -33);
+                ctx.moveTo(5, -25);
+                ctx.lineTo(11, -33);
+                ctx.stroke();
+
+                // Sensor Tips Glow
+                ctx.fillStyle = '#00f3ff';
+                ctx.beginPath();
+                ctx.arc(-11, -33, 1.5, 0, Math.PI * 2);
+                ctx.arc(11, -33, 1.5, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 5. Neon Visor Eyes (High-intensity Cyber Visor)
+                ctx.fillStyle = '#ff007f';
+                ctx.shadowColor = '#ff007f';
+                ctx.shadowBlur = 12;
+                ctx.beginPath();
+                ctx.moveTo(-7, -20);
+                ctx.lineTo(-1, -22);
+                ctx.lineTo(-2, -18);
+                ctx.lineTo(-7, -18);
+                ctx.closePath();
+                ctx.fill();
+
+                ctx.beginPath();
+                ctx.moveTo(7, -20);
+                ctx.lineTo(1, -22);
+                ctx.lineTo(2, -18);
+                ctx.lineTo(7, -18);
+                ctx.closePath();
+                ctx.fill();
+
+                // Center HUD scanner bar
+                ctx.fillStyle = '#00f3ff';
+                ctx.shadowColor = '#00f3ff';
+                ctx.shadowBlur = 8;
+                ctx.fillRect(-2, -21, 4, 1.5);
+
+                // Invulnerable Shield Sphere
+                if (this.invulnerable) {
+                    ctx.strokeStyle = '#00f3ff';
+                    ctx.shadowColor = '#00f3ff';
+                    ctx.shadowBlur = 16;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 32, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
 
                 ctx.restore();
             }
@@ -616,10 +882,13 @@
             }
 
             shoot() {
-                projectiles.push(new Projectile(this.x, this.y - 25, -90));
+                // Dual neon laser cannons
+                projectiles.push(new Projectile(this.x - 7, this.y - 26, -90));
+                projectiles.push(new Projectile(this.x + 7, this.y - 26, -90));
                 this.lastShotTime = Date.now();
                 playSound('shoot');
-                createParticles(this.x, this.y - 25, '#80DEEA', 3, 1.5, 'water');
+                createParticles(this.x - 7, this.y - 26, '#00f3ff', 2, 1.5, 'neon');
+                createParticles(this.x + 7, this.y - 26, '#00f3ff', 2, 1.5, 'neon');
             }
             
             takeDamage() {
@@ -627,7 +896,8 @@
                 lives--;
                 updateHUDLives();
                 playSound('hit');
-                createParticles(this.x, this.y, '#FF5252', 20, 4, 'explosion');
+                createParticles(this.x, this.y, '#ff007f', 15, 4, 'explosion');
+                createParticles(this.x, this.y, '#00f3ff', 15, 3.5, 'neon');
                 
                 if (lives <= 0) endGame();
                 else {
@@ -641,8 +911,9 @@
             constructor(x, y, angle) {
                 this.x = x;
                 this.y = y;
-                this.radius = 6;
-                this.speed = 13;
+                this.radius = 4;
+                this.length = 18;
+                this.speed = 14;
                 const radian = angle * Math.PI / 180;
                 this.velocity = { x: Math.cos(radian) * this.speed, y: Math.sin(radian) * this.speed };
                 this.markedForDeletion = false;
@@ -651,14 +922,23 @@
             draw() {
                 ctx.save();
                 ctx.translate(this.x, this.y);
-                ctx.fillStyle = '#00E5FF';
+                
+                // High-intensity Neon Laser Bolt
+                ctx.shadowColor = '#00f3ff';
+                ctx.shadowBlur = 12;
+
+                // Outer Glow Bolt
+                ctx.fillStyle = '#00f3ff';
                 ctx.beginPath();
-                ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                ctx.ellipse(0, 0, 3.5, 9, 0, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.fillStyle = '#E0F7FA';
+
+                // Core Bright Beam
+                ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
-                ctx.arc(-2, -2, 2.5, 0, Math.PI * 2);
+                ctx.ellipse(0, 0, 1.8, 7, 0, 0, Math.PI * 2);
                 ctx.fill();
+
                 ctx.restore();
             }
 
@@ -678,7 +958,7 @@
             constructor(x, y, targetX, targetY, speed = 5) {
                 this.x = x;
                 this.y = y;
-                this.radius = 7;
+                this.radius = 6.5;
                 const angle = Math.atan2(targetY - y, targetX - x);
                 this.velocity = { x: Math.cos(angle) * speed, y: Math.sin(angle) * speed };
                 this.markedForDeletion = false;
@@ -687,12 +967,21 @@
             draw() {
                 ctx.save();
                 ctx.translate(this.x, this.y);
-                ctx.fillStyle = '#FF1744';
-                ctx.shadowColor = '#FF1744';
-                ctx.shadowBlur = 8;
+
+                // Crimson Neon Plasma Orb
+                ctx.shadowColor = '#ff007f';
+                ctx.shadowBlur = 12;
+
+                ctx.fillStyle = '#ff007f';
                 ctx.beginPath();
                 ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
                 ctx.fill();
+
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius * 0.45, 0, Math.PI * 2);
+                ctx.fill();
+
                 ctx.restore();
             }
 
@@ -711,12 +1000,12 @@
         class Enemy {
             constructor() {
                 const enemyTypes = [
-                    { emoji: '🐞', type: 'standard', hp: 1, score: 100, speed: 2.2, radius: 20, color: 'rgba(220, 53, 69, 0.45)' },
-                    { emoji: '🦋', type: 'standard', hp: 1, score: 120, speed: 1.8, radius: 24, color: 'rgba(13, 202, 240, 0.45)' },
-                    { emoji: '🐝', type: 'fast', hp: 1, score: 200, speed: 3.8, radius: 18, color: 'rgba(255, 193, 7, 0.45)' },
-                    { emoji: '🦟', type: 'fast', hp: 1, score: 250, speed: 4.2, radius: 16, color: 'rgba(108, 117, 125, 0.45)' },
-                    { emoji: '🪲', type: 'tank', hp: 4, score: 400, speed: 1.2, radius: 30, color: 'rgba(25, 135, 84, 0.45)' },
-                    { emoji: '🕷️', type: 'tank', hp: 3, score: 300, speed: 1.4, radius: 28, color: 'rgba(111, 66, 193, 0.45)' }
+                    { emoji: '🐞', type: 'standard', hp: 1, score: 100, speed: 2.2, radius: 20, neonColor: '#ff0055', label: 'BUG-01' },
+                    { emoji: '🦋', type: 'standard', hp: 1, score: 120, speed: 1.8, radius: 24, neonColor: '#00f3ff', label: 'BUG-02' },
+                    { emoji: '🐝', type: 'fast', hp: 1, score: 200, speed: 3.8, radius: 18, neonColor: '#ffe600', label: 'STINGER' },
+                    { emoji: '🦟', type: 'fast', hp: 1, score: 250, speed: 4.2, radius: 16, neonColor: '#a855f7', label: 'DRONE' },
+                    { emoji: '🪲', type: 'tank', hp: 4, score: 400, speed: 1.2, radius: 30, neonColor: '#00ff88', label: 'HEAVY' },
+                    { emoji: '🕷️', type: 'tank', hp: 3, score: 300, speed: 1.4, radius: 28, neonColor: '#ff007f', label: 'ARACHNID' }
                 ];
                 
                 const selected = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
@@ -725,7 +1014,8 @@
                 this.hp = selected.hp;
                 this.scoreValue = selected.score;
                 this.radius = selected.radius;
-                this.bgColor = selected.color;
+                this.neonColor = selected.neonColor;
+                this.label = selected.label;
                 
                 this.x = randomRange(this.radius, LOGICAL_WIDTH - this.radius);
                 this.y = -this.radius - 20; 
@@ -740,29 +1030,51 @@
                 ctx.save();
                 ctx.translate(this.x, this.y);
                 
+                const now = Date.now();
                 if (this.type !== 'tank') {
-                    ctx.rotate(Math.sin(Date.now() * 0.01 + this.wobbleOffset) * 0.2);
+                    ctx.rotate(Math.sin(now * 0.01 + this.wobbleOffset) * 0.2);
                 }
 
-                // Guaranteed visible background shape fallback for all mobile browsers
-                ctx.fillStyle = this.bgColor;
+                // 1. Rotating Cyber Target Ring & Reticle
+                const reticleAngle = (now * 0.002) + this.wobbleOffset;
+                ctx.save();
+                ctx.rotate(reticleAngle);
+                ctx.strokeStyle = this.neonColor;
+                ctx.shadowColor = this.neonColor;
+                ctx.shadowBlur = 10;
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([6, 8]);
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius + 4, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.restore();
+
+                // 2. High-tech Hex/Circular Neon Core Base
+                ctx.fillStyle = 'rgba(10, 15, 30, 0.75)';
                 ctx.beginPath();
                 ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.strokeStyle = '#FFFFFF';
-                ctx.lineWidth = 1.5;
+
+                ctx.strokeStyle = this.neonColor;
+                ctx.lineWidth = 2;
+                ctx.shadowColor = this.neonColor;
+                ctx.shadowBlur = 8;
                 ctx.stroke();
 
-                // Cross-platform Emoji text rendering
-                ctx.font = `${Math.floor(this.radius * 1.8)}px ${EMOJI_FONT_STACK}`;
+                // 3. Emoji Bug Graphic
+                ctx.font = `${Math.floor(this.radius * 1.7)}px ${EMOJI_FONT_STACK}`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(this.emoji, 0, 2);
                 
+                // Hit Flash (Neon White)
                 if (this.hitTimer > 0) {
-                    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+                    ctx.shadowColor = '#ffffff';
+                    ctx.shadowBlur = 15;
                     ctx.beginPath();
-                    ctx.arc(0, 0, this.radius, 0, Math.PI*2);
+                    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
                     ctx.fill();
                 }
 
@@ -798,7 +1110,8 @@
                     score += this.scoreValue;
                     updateScoreDisplay();
                     playSound('explosion');
-                    createParticles(this.x, this.y, '#7CB342', 15, this.radius / 5, 'splat');
+                    createParticles(this.x, this.y, this.neonColor, 18, this.radius / 4.5, 'neon');
+                    createParticles(this.x, this.y, '#ffffff', 8, 2, 'neon');
                     checkBossSpawn();
                 }
             }
@@ -824,29 +1137,65 @@
                 ctx.save();
                 ctx.translate(this.x, this.y);
 
-                const auraGlow = Math.sin(Date.now() * 0.01) * 10 + 20;
-                ctx.shadowColor = '#FF1744';
-                ctx.shadowBlur = auraGlow;
+                const now = Date.now();
+                const auraGlow = Math.sin(now * 0.01) * 12 + 25;
 
-                // Boss Body Base Fallback Shape
-                ctx.fillStyle = 'rgba(180, 20, 20, 0.6)';
+                // 1. Dual Rotating Cyber Shield Rings
+                ctx.save();
+                ctx.rotate(now * 0.0015);
+                ctx.strokeStyle = '#ff0055';
+                ctx.shadowColor = '#ff0055';
+                ctx.shadowBlur = auraGlow;
+                ctx.lineWidth = 3;
+                ctx.setLineDash([16, 12, 4, 12]);
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius + 14, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+
+                ctx.save();
+                ctx.rotate(-now * 0.002);
+                ctx.strokeStyle = '#ffe600';
+                ctx.shadowColor = '#ffe600';
+                ctx.shadowBlur = 10;
+                ctx.lineWidth = 1.5;
+                ctx.setLineDash([8, 16]);
+                ctx.beginPath();
+                ctx.arc(0, 0, this.radius + 6, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+
+                // 2. Boss Core Body Base
+                ctx.fillStyle = 'rgba(25, 5, 20, 0.85)';
                 ctx.beginPath();
                 ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.strokeStyle = '#FFD700';
-                ctx.lineWidth = 3;
+
+                ctx.strokeStyle = '#ff007f';
+                ctx.lineWidth = 3.5;
+                ctx.shadowColor = '#ff007f';
+                ctx.shadowBlur = 16;
                 ctx.stroke();
 
-                ctx.font = `80px ${EMOJI_FONT_STACK}`;
+                // 3. Emoji Boss Graphic
+                ctx.font = `82px ${EMOJI_FONT_STACK}`;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText('🪲', 0, 5);
+                ctx.fillText('🪲', 0, 6);
 
-                ctx.font = `40px ${EMOJI_FONT_STACK}`;
-                ctx.fillText('👑', 0, -50);
+                // Crown with Neon Gold Glow
+                ctx.save();
+                ctx.shadowColor = '#ffe600';
+                ctx.shadowBlur = 14;
+                ctx.font = `44px ${EMOJI_FONT_STACK}`;
+                ctx.fillText('👑', 0, -52);
+                ctx.restore();
 
+                // Hit Flash
                 if (this.hitTimer > 0) {
-                    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+                    ctx.shadowColor = '#ffffff';
+                    ctx.shadowBlur = 25;
                     ctx.beginPath();
                     ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
                     ctx.fill();
@@ -897,18 +1246,20 @@
                 bossHpBar.style.width = `${percent}%`;
                 bossHpPercent.innerText = `${percent}%`;
 
-                createParticles(this.x, this.y + 20, '#FFD54F', 4, 2, 'splat');
+                createParticles(this.x, this.y + 20, '#ff007f', 4, 2, 'neon');
 
                 if (this.hp <= 0) {
                     this.markedForDeletion = true;
                     score += 5000;
                     updateScoreDisplay();
                     playSound('explosion');
-                    createParticles(this.x, this.y, '#FF1744', 60, 6, 'explosion');
+                    createParticles(this.x, this.y, '#ff0055', 40, 6, 'explosion');
+                    createParticles(this.x, this.y, '#00f3ff', 40, 5, 'neon');
+                    createParticles(this.x, this.y, '#ffe600', 30, 4, 'neon');
                     
                     setTimeout(() => {
                         bossHealthContainer.classList.add('opacity-0');
-                        sceneIndicator.innerText = "🎉 昆虫大魔王撃破！平和が訪れた！ 🎉";
+                        sceneIndicator.innerText = "🎉 HERACLES CORE PURGED! SYSTEM SECURED! 🎉";
                     }, 500);
                 }
             }
@@ -918,7 +1269,7 @@
             constructor(x, y, color, speedMultiplier, style) {
                 this.x = x;
                 this.y = y;
-                this.radius = randomRange(2, style === 'water' ? 4 : 6);
+                this.radius = randomRange(2, style === 'neon' ? 4 : 6);
                 this.color = color;
                 this.style = style;
                 const angle = randomRange(0, Math.PI * 2);
@@ -932,6 +1283,8 @@
             draw() {
                 ctx.save();
                 ctx.globalAlpha = this.alpha;
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 8;
                 ctx.fillStyle = this.color;
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
@@ -952,8 +1305,8 @@
             constructor() {
                 this.x = randomRange(0, LOGICAL_WIDTH);
                 this.y = randomRange(0, LOGICAL_HEIGHT);
-                this.size = randomRange(3, 8);
-                this.speed = randomRange(1, 4);
+                this.size = randomRange(3, 7);
+                this.speed = randomRange(1.2, 3.5);
                 this.offset = Math.random() * 100;
             }
             
@@ -962,19 +1315,25 @@
                 ctx.translate(this.x, this.y);
                 
                 if (biome === 'grassland') {
-                    ctx.fillStyle = 'rgba(129, 199, 132, 0.6)';
-                    ctx.rotate(this.y * 0.02 + this.offset);
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, this.size, this.size/2, 0, 0, Math.PI*2);
-                    ctx.fill();
+                    // Cyber Matrix Green Bits
+                    ctx.shadowColor = '#00ff88';
+                    ctx.shadowBlur = 6;
+                    ctx.fillStyle = 'rgba(0, 255, 136, 0.45)';
+                    ctx.fillRect(-this.size / 2, -this.size / 2, this.size, this.size * 2);
                 } else if (biome === 'river') {
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.35)';
-                    ctx.fillRect(-this.size, 0, this.size*2.5, 2);
+                    // Cyber Blue / Cyan Stream Streamers
+                    ctx.shadowColor = '#00f3ff';
+                    ctx.shadowBlur = 8;
+                    ctx.fillStyle = 'rgba(0, 243, 255, 0.6)';
+                    ctx.fillRect(-1, 0, 2, this.size * 3.5);
                 } else {
-                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+                    // Boss Core Pulse Nodes
+                    ctx.shadowColor = '#ff007f';
+                    ctx.shadowBlur = 8;
+                    ctx.strokeStyle = 'rgba(255, 0, 127, 0.6)';
                     ctx.lineWidth = 1.5;
                     ctx.beginPath();
-                    ctx.arc(0, 0, this.size, 0, Math.PI*2);
+                    ctx.arc(0, 0, this.size, 0, Math.PI * 2);
                     ctx.stroke();
                 }
                 ctx.restore();
@@ -986,12 +1345,12 @@
                 let dx = 0;
                 
                 if (biome === 'grassland') {
-                    dx = Math.sin(Date.now() * 0.001 + this.offset) * 1.5;
+                    dy = this.speed * 1.8;
                 } else if (biome === 'river') {
-                    dy = this.speed * 2.8;
+                    dy = this.speed * 3.2;
                 } else {
-                    dy = -this.speed * 0.8;
-                    dx = Math.sin(Date.now() * 0.002 + this.offset) * 0.5;
+                    dy = -this.speed * 1.2;
+                    dx = Math.sin(Date.now() * 0.003 + this.offset) * 0.8;
                 }
                 
                 this.y += dy * speedFactor;
@@ -1013,7 +1372,7 @@
 
         function initBackground() {
             natureElements = [];
-            for (let i = 0; i < 50; i++) {
+            for (let i = 0; i < 45; i++) {
                 natureElements.push(new NatureElement());
             }
         }
@@ -1035,7 +1394,7 @@
                 gameState = 'PLAYING';
                 boss = new Boss();
                 currentBiome = 'bossCastle';
-                sceneIndicator.innerText = "👑 決戦！ 昆虫大魔王 城 👑";
+                sceneIndicator.innerText = "👑 BOSS CORE: HERACLES OVERDRIVE 👑";
                 bossHealthContainer.classList.remove('opacity-0');
                 startBossBgm();
             }, 3000);
@@ -1047,10 +1406,10 @@
             if (!bossSpawned) {
                 if (score < 800) {
                     currentBiome = 'grassland';
-                    sceneIndicator.innerText = "🌿 ステージ 1: 平穏な草原 🌿";
+                    sceneIndicator.innerText = "❖ STAGE 1: CYBER MATRIX ❖";
                 } else if (score < 2000) {
                     currentBiome = 'river';
-                    sceneIndicator.innerText = "🌊 ステージ 2: 清流の川辺 🌊";
+                    sceneIndicator.innerText = "❖ STAGE 2: NEON STREAM ❖";
                 }
             }
         }
@@ -1095,9 +1454,9 @@
             stopAllBgm();
             finalScoreDisplay.innerText = score;
             if (bossSpawned && boss && boss.hp <= 0) {
-                gameOverSubtext.innerText = "🎉 見事に昆虫大魔王を撃破しました！ 🎉";
+                gameOverSubtext.innerText = "🎉 見事に昆虫大魔王コアを撃破しました！ 🎉";
             } else {
-                gameOverSubtext.innerText = "昆虫大魔王の野望を止められなかった...";
+                gameOverSubtext.innerText = "昆虫大魔王の侵攻を食い止められなかった...";
             }
             gameOverScreen.classList.remove('hidden');
         }
@@ -1151,22 +1510,71 @@
         }
 
         function drawBackground() {
-            let c1, c2;
+            const now = Date.now();
+            let baseC1, baseC2, gridColor, subGridColor;
+
             if (currentBiome === 'grassland') {
-                c1 = '#2E7D32'; c2 = '#1B5E20';
+                // Cyber Matrix
+                baseC1 = '#03140a'; baseC2 = '#010804';
+                gridColor = 'rgba(0, 255, 136, 0.15)';
+                subGridColor = 'rgba(0, 255, 136, 0.05)';
             } else if (currentBiome === 'river') {
-                c1 = '#0288D1'; c2 = '#01579B';
+                // Neon Stream
+                baseC1 = '#041026'; baseC2 = '#020512';
+                gridColor = 'rgba(0, 243, 255, 0.18)';
+                subGridColor = 'rgba(121, 40, 202, 0.08)';
             } else if (currentBiome === 'sea') {
-                c1 = '#1565C0'; c2 = '#0D47A1';
+                // Electric Deep
+                baseC1 = '#080826'; baseC2 = '#02020f';
+                gridColor = 'rgba(0, 180, 255, 0.15)';
+                subGridColor = 'rgba(0, 180, 255, 0.05)';
             } else {
-                c1 = '#4A148C'; c2 = '#1A237E';
+                // Boss Core Overdrive (Crimson / Violet)
+                baseC1 = '#1a0314'; baseC2 = '#09010a';
+                gridColor = 'rgba(255, 0, 127, 0.22)';
+                subGridColor = 'rgba(255, 0, 85, 0.08)';
             }
             
+            // Deep Cyber Gradient
             const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-            gradient.addColorStop(0, c1);
-            gradient.addColorStop(1, c2);
+            gradient.addColorStop(0, baseC1);
+            gradient.addColorStop(1, baseC2);
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Animated Neon Cyber Grid Lines (Scrolling down)
+            const gridSize = 40;
+            const scrollOffset = (now * 0.08) % gridSize;
+
+            ctx.save();
+            // Vertical Lines
+            ctx.strokeStyle = subGridColor;
+            ctx.lineWidth = 1;
+            for (let x = 0; x <= canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            // Horizontal Scrolling Lines
+            ctx.strokeStyle = gridColor;
+            ctx.lineWidth = 1;
+            for (let y = scrollOffset; y <= canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Glowing Horizon Accent at the bottom
+            const horizonGrad = ctx.createLinearGradient(0, canvas.height - 80, 0, canvas.height);
+            horizonGrad.addColorStop(0, 'transparent');
+            horizonGrad.addColorStop(1, gridColor);
+            ctx.fillStyle = horizonGrad;
+            ctx.fillRect(0, canvas.height - 80, canvas.width, 80);
+
+            ctx.restore();
         }
 
         function gameLoop(timestamp) {
