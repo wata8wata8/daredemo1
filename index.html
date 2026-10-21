@@ -460,7 +460,12 @@
         let enemies = [];
         let boss = null;
         let particles = [];
+        let combatTexts = [];
         let natureElements = [];
+        let comboCount = 0;
+        let comboTimer = 0;
+        let slowMotionTimer = 0;
+        let screenShakeTimer = 0;
 
         // Preload Emperor TITI illustrated boss image
         const bossImage = new Image();
@@ -1117,8 +1122,10 @@
                     score += this.scoreValue;
                     updateScoreDisplay();
                     playSound('explosion');
-                    createParticles(this.x, this.y, this.neonColor, 18, this.radius / 4.5, 'neon');
-                    createParticles(this.x, this.y, '#ffffff', 8, 2, 'neon');
+                    createParticles(this.x, this.y, this.neonColor, 28, this.radius / 4, 'neon');
+                    createParticles(this.x, this.y, '#ffffff', 12, 2.5, 'neon');
+                    createParticles(this.x, this.y, '#00f3ff', 12, 3, 'neon');
+                    registerDefeat(this.x, this.y, this.scoreValue);
                     checkBossSpawn();
                 }
             }
@@ -1338,6 +1345,7 @@
                     createParticles(this.x, this.y, '#ff0055', 40, 6, 'explosion');
                     createParticles(this.x, this.y, '#00f3ff', 40, 5, 'neon');
                     createParticles(this.x, this.y, '#ffe600', 30, 4, 'neon');
+                    registerDefeat(this.x, this.y, 5000);
                     
                     setTimeout(() => {
                         bossHealthContainer.classList.add('opacity-0');
@@ -1380,6 +1388,52 @@
                 this.y += this.velocity.y * speedFactor;
                 this.alpha -= this.decay * speedFactor;
                 if (this.alpha <= 0) this.markedForDeletion = true;
+            }
+        }
+
+        class CombatText {
+            constructor(x, y, text, color, fontSize) {
+                this.x = x;
+                this.y = y;
+                this.text = text;
+                this.color = color;
+                this.fontSize = fontSize;
+                this.alpha = 1;
+                this.markedForDeletion = false;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.font = `800 ${this.fontSize}px 'Orbitron', sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = 'rgba(3, 5, 18, 0.9)';
+                ctx.strokeText(this.text, this.x, this.y);
+                ctx.fillStyle = this.color;
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 14;
+                ctx.fillText(this.text, this.x, this.y);
+                ctx.restore();
+            }
+
+            update(deltaTime) {
+                const speedFactor = deltaTime / MS_PER_FRAME;
+                this.y -= 1.2 * speedFactor;
+                this.alpha -= 0.025 * speedFactor;
+                if (this.alpha <= 0) this.markedForDeletion = true;
+            }
+        }
+
+        function registerDefeat(x, y, points) {
+            comboCount = comboTimer > 0 ? comboCount + 1 : 1;
+            comboTimer = 1800;
+            slowMotionTimer = 420;
+            screenShakeTimer = 160;
+            combatTexts.push(new CombatText(x, y, `+${points}`, '#ffffff', 22));
+            if (comboCount > 1) {
+                combatTexts.push(new CombatText(x, y - 28, `${comboCount} HIT COMBO!`, '#ffe600', 16));
             }
         }
 
@@ -1509,6 +1563,11 @@
             enemyProjectiles = [];
             enemies = [];
             particles = [];
+            combatTexts = [];
+            comboCount = 0;
+            comboTimer = 0;
+            slowMotionTimer = 0;
+            screenShakeTimer = 0;
             boss = null;
             score = 0;
             lives = 3;
@@ -1669,14 +1728,25 @@
             }
 
             drawBackground();
+            slowMotionTimer = Math.max(0, slowMotionTimer - deltaTime);
+            screenShakeTimer = Math.max(0, screenShakeTimer - deltaTime);
+            comboTimer = Math.max(0, comboTimer - deltaTime);
+            if (comboTimer === 0) comboCount = 0;
+            const gameDeltaTime = deltaTime * (slowMotionTimer > 0 ? 0.35 : 1);
+
+            ctx.save();
+            if (screenShakeTimer > 0) {
+                const shake = screenShakeTimer / 160 * 7;
+                ctx.translate(randomRange(-shake, shake), randomRange(-shake, shake));
+            }
 
             natureElements.forEach(el => {
-                el.update(deltaTime, currentBiome);
+                el.update(gameDeltaTime, currentBiome);
                 el.draw(currentBiome);
             });
 
             if (gameState === 'PLAYING') {
-                player.update(deltaTime);
+                player.update(gameDeltaTime);
                 player.draw();
 
                 // Spawn regular enemies
@@ -1686,14 +1756,15 @@
                 }
 
                 if (boss) {
-                    boss.update(deltaTime);
+                    boss.update(gameDeltaTime);
                     boss.draw();
                 }
 
-                projectiles.forEach(p => p.update(deltaTime));
-                enemyProjectiles.forEach(ep => ep.update(deltaTime));
-                enemies.forEach(e => e.update(deltaTime));
-                particles.forEach(p => p.update(deltaTime));
+                projectiles.forEach(p => p.update(gameDeltaTime));
+                enemyProjectiles.forEach(ep => ep.update(gameDeltaTime));
+                enemies.forEach(e => e.update(gameDeltaTime));
+                particles.forEach(p => p.update(gameDeltaTime));
+                combatTexts.forEach(text => text.update(deltaTime));
 
                 handleCollisions();
 
@@ -1701,11 +1772,13 @@
                 enemyProjectiles.forEach(ep => ep.draw());
                 enemies.forEach(e => e.draw());
                 particles.forEach(p => p.draw());
+                combatTexts.forEach(text => text.draw());
 
                 projectiles = projectiles.filter(p => !p.markedForDeletion);
                 enemyProjectiles = enemyProjectiles.filter(ep => !ep.markedForDeletion);
                 enemies = enemies.filter(e => !e.markedForDeletion);
                 particles = particles.filter(p => !p.markedForDeletion);
+                combatTexts = combatTexts.filter(text => !text.markedForDeletion);
                 if (boss && boss.markedForDeletion) boss = null;
                 
             } else if (gameState === 'GAMEOVER') {
@@ -1713,7 +1786,13 @@
                     p.update(deltaTime);
                     p.draw();
                 });
+                combatTexts.forEach(text => {
+                    text.update(deltaTime);
+                    text.draw();
+                });
+                combatTexts = combatTexts.filter(text => !text.markedForDeletion);
             }
+            ctx.restore();
 
             animationId = requestAnimationFrame(gameLoop);
         }
